@@ -13,14 +13,13 @@ namespace MovUrAcc
 {
 	[BepInPlugin(GUID, PluginName, Version)]
 	[BepInDependency("marco.kkapi")]
-	[BepInDependency("com.deathweasel.bepinex.materialeditor")]
 	[BepInProcess("Koikatu")]
 	[BepInProcess("Koikatsu Party")]
 	public partial class MovUrAcc : BaseUnityPlugin
 	{
 		public const string GUID = "madevil.kk.MovUrAcc";
 		public const string PluginName = "MovUrAcc";
-		public const string Version = "1.1.0.0";
+		public const string Version = "1.2.0.0";
 
 		internal static new ManualLogSource Logger;
 		internal static bool IsDark;
@@ -47,8 +46,7 @@ namespace MovUrAcc
 
 				MakerTextbox NewStartTextbox = ev.AddControl(new MakerTextbox(category, "Shift first slot to", "", this));
 
-				MakerButton btnApply = new MakerButton("Go", category, this);
-				ev.AddControl(btnApply);
+				MakerButton btnApply = ev.AddControl(new MakerButton("Go", category, this));
 				btnApply.OnClick.AddListener(delegate
 				{
 					int start = 0, end = 0, newstart = 0;
@@ -74,8 +72,7 @@ namespace MovUrAcc
 
 				ev.AddControl(new MakerText("Pack acc list by removing unused slots", category, this));
 
-				MakerButton btnPackSlots = new MakerButton("Go", category, this);
-				ev.AddControl(btnPackSlots);
+				MakerButton btnPackSlots = ev.AddControl(new MakerButton("Go", category, this));
 				btnPackSlots.OnClick.AddListener(delegate
 				{
 					ApplyPacking();
@@ -85,11 +82,9 @@ namespace MovUrAcc
 
 				ev.AddControl(new MakerText("Remove hair accessories", category, this));
 
-				var tglRemoveHairAccInverse = new MakerToggle(category, "Inverse selection", false, this);
-				ev.AddControl(tglRemoveHairAccInverse);
+				MakerToggle tglRemoveHairAccInverse = ev.AddControl(new MakerToggle(category, "Inverse selection", false, this));
 
-				MakerButton btnRemoveHairAcc = new MakerButton("Go", category, this);
-				ev.AddControl(btnRemoveHairAcc);
+				MakerButton btnRemoveHairAcc = ev.AddControl(new MakerButton("Go", category, this));
 				btnRemoveHairAcc.OnClick.AddListener(delegate
 				{
 					RemoveHairAcc(tglRemoveHairAccInverse.Value);
@@ -99,8 +94,7 @@ namespace MovUrAcc
 
 				ev.AddControl(new MakerText("Trim down unused MoreAccessories slots", category, this));
 
-				MakerButton btnMoreAccApply = new MakerButton("Go", category, this);
-				ev.AddControl(btnMoreAccApply);
+				MakerButton btnMoreAccApply = ev.AddControl(new MakerButton("Go", category, this));
 				btnMoreAccApply.OnClick.AddListener(delegate
 				{
 					MoreAccessories.TrimUnusedSlots();
@@ -190,9 +184,9 @@ namespace MovUrAcc
 		internal static void RemoveHairAcc(bool inverse)
 		{
 			ChaControl chaCtrl = MakerAPI.GetCharacterControl();
-			var MEpluginCtrl = MaterialEditor.GetController(chaCtrl);
-			var HACpluginCtrl = HairAccessoryCustomizer.GetController(chaCtrl);
-			var ASSpluginCtrl = AccStateSync.GetController(chaCtrl);
+			object MEpluginCtrl = MaterialEditor.GetController(chaCtrl);
+			object HACpluginCtrl = HairAccessoryCustomizer.GetController(chaCtrl);
+			object ASSpluginCtrl = AccStateSync.GetController(chaCtrl);
 			int nowAccCount = MoreAccessories.PluginInstance._charaMakerData.nowAccessories.Count;
 			int Coordinate = chaCtrl.fileStatus.coordinateType;
 
@@ -207,10 +201,12 @@ namespace MovUrAcc
 					continue;
 
 				HairAccessoryCustomizer.RemoveSetting(HACpluginCtrl, srcSlot);
-				MaterialEditor.RemoveSetting(MEpluginCtrl, Coordinate, srcSlot);
+				MaterialEditor.RemoveSetting(MEpluginCtrl, srcSlot);
 				AccStateSync.RemoveSetting(ASSpluginCtrl, srcSlot);
 				MoreAccessories.ResetPartsInfo(chaCtrl, Coordinate, srcSlot);
 			}
+
+			AccStateSync.SyncVirtualGroupInfo(ASSpluginCtrl, Coordinate);
 
 			ChaCustom.CustomBase.Instance.chaCtrl.ChangeCoordinateTypeAndReload(false);
 			Singleton<ChaCustom.CustomBase>.Instance.updateCustomUI = true;
@@ -230,9 +226,9 @@ namespace MovUrAcc
 		internal static void ProcessQueue(List<QueueItem> Queue)
 		{
 			ChaControl chaCtrl = MakerAPI.GetCharacterControl();
-			var MEpluginCtrl = MaterialEditor.GetController(chaCtrl);
-			var HACpluginCtrl = HairAccessoryCustomizer.GetController(chaCtrl);
-			var ASSpluginCtrl = AccStateSync.GetController(chaCtrl);
+			object MEpluginCtrl = MaterialEditor.GetController(chaCtrl);
+			object HACpluginCtrl = HairAccessoryCustomizer.GetController(chaCtrl);
+			object ASSpluginCtrl = AccStateSync.GetController(chaCtrl);
 
 			HairAccessoryCustomizer.HairAccessoryInfos = new Dictionary<int, HairAccessoryCustomizer.HairAccessoryInfo>();
 			int Coordinate = chaCtrl.fileStatus.coordinateType;
@@ -256,7 +252,7 @@ namespace MovUrAcc
 		{
 			try
 			{
-				var accessory = AccessoriesApi.GetAccessory(chaCtrl, slot);
+				ChaAccessoryComponent accessory = AccessoriesApi.GetAccessory(chaCtrl, slot);
 				if (accessory == null)
 					return false;
 				return accessory.gameObject?.GetComponent<ChaCustomHairComponent>() != null;

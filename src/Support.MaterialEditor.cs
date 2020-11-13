@@ -1,11 +1,7 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-
-using BepInEx;
+﻿using BepInEx;
 using HarmonyLib;
 
-using KK_Plugins.MaterialEditor;
-using static KK_Plugins.MaterialEditor.MaterialEditorCharaController;
+using KKAPI.Maker;
 
 namespace MovUrAcc
 {
@@ -13,45 +9,33 @@ namespace MovUrAcc
 	{
 		internal static class MaterialEditor
 		{
+			internal static bool Installed = false;
 			internal static BaseUnityPlugin PluginInstance;
 
 			internal static void InitSupport()
 			{
 				BepInEx.Bootstrap.Chainloader.PluginInfos.TryGetValue("com.deathweasel.bepinex.materialeditor", out PluginInfo PluginInfo);
-				PluginInstance = PluginInfo.Instance;
+				PluginInstance = PluginInfo?.Instance;
+				if (PluginInstance != null) Installed = true;
 			}
 
-			internal static MaterialEditorCharaController GetController(ChaControl chaCtrl)
+			internal static object GetController(ChaControl chaCtrl)
 			{
-				return Traverse.Create(PluginInstance).Method("GetCharaController", new object[] { chaCtrl }).GetValue<MaterialEditorCharaController>();
+				if (!Installed) return null;
+				return Traverse.Create(PluginInstance).Method("GetCharaController", new object[] { chaCtrl }).GetValue();
 			}
 
-			internal static void ModifySetting(MaterialEditorCharaController pluginCtrl, int index, int srcSlot, int dstSlot)
+			internal static void ModifySetting(object pluginCtrl, int index, int srcSlot, int dstSlot)
 			{
-				List<RendererProperty> RendererPropertyList = Traverse.Create(pluginCtrl).Field("RendererPropertyList").GetValue<List<RendererProperty>>();
-				RendererPropertyList.Where(x => x.CoordinateIndex == index && x.ObjectType == ObjectType.Accessory && x.Slot == srcSlot).ToList().ForEach(x => x.Slot = dstSlot);
-				List<MaterialFloatProperty> MaterialFloatPropertyList = Traverse.Create(pluginCtrl).Field("MaterialFloatPropertyList").GetValue<List<MaterialFloatProperty>>();
-				MaterialFloatPropertyList.Where(x => x.CoordinateIndex == index && x.ObjectType == ObjectType.Accessory && x.Slot == srcSlot).ToList().ForEach(x => x.Slot = dstSlot);
-				List<MaterialColorProperty> MaterialColorPropertyList = Traverse.Create(pluginCtrl).Field("MaterialColorPropertyList").GetValue<List<MaterialColorProperty>>();
-				MaterialColorPropertyList.Where(x => x.CoordinateIndex == index && x.ObjectType == ObjectType.Accessory && x.Slot == srcSlot).ToList().ForEach(x => x.Slot = dstSlot);
-				List<MaterialTextureProperty> MaterialTexturePropertyList = Traverse.Create(pluginCtrl).Field("MaterialTexturePropertyList").GetValue<List<MaterialTextureProperty>>();
-				MaterialTexturePropertyList.Where(x => x.CoordinateIndex == index && x.ObjectType == ObjectType.Accessory && x.Slot == srcSlot).ToList().ForEach(x => x.Slot = dstSlot);
-				List<MaterialShader> MaterialShaderList = Traverse.Create(pluginCtrl).Field("MaterialShaderList").GetValue<List<MaterialShader>>();
-				MaterialShaderList.Where(x => x.CoordinateIndex == index && x.ObjectType == ObjectType.Accessory && x.Slot == srcSlot).ToList().ForEach(x => x.Slot = dstSlot);
+				if (!Installed) return;
+				Traverse.Create(pluginCtrl).Method("AccessoryTransferredEvent", new object[] { null, new AccessoryTransferEventArgs(srcSlot, dstSlot) }).GetValue();
+				RemoveSetting(pluginCtrl, srcSlot);
 			}
 
-			internal static void RemoveSetting(MaterialEditorCharaController pluginCtrl, int index, int slot)
+			internal static void RemoveSetting(object pluginCtrl, int slot)
 			{
-				List<RendererProperty> RendererPropertyList = Traverse.Create(pluginCtrl).Field("RendererPropertyList").GetValue<List<RendererProperty>>();
-				RendererPropertyList.RemoveAll(x => x.CoordinateIndex == index && x.ObjectType == ObjectType.Accessory && x.Slot == slot);
-				List<MaterialFloatProperty> MaterialFloatPropertyList = Traverse.Create(pluginCtrl).Field("MaterialFloatPropertyList").GetValue<List<MaterialFloatProperty>>();
-				MaterialFloatPropertyList.RemoveAll(x => x.CoordinateIndex == index && x.ObjectType == ObjectType.Accessory && x.Slot == slot);
-				List<MaterialColorProperty> MaterialColorPropertyList = Traverse.Create(pluginCtrl).Field("MaterialColorPropertyList").GetValue<List<MaterialColorProperty>>();
-				MaterialColorPropertyList.RemoveAll(x => x.CoordinateIndex == index && x.ObjectType == ObjectType.Accessory && x.Slot == slot);
-				List<MaterialTextureProperty> MaterialTexturePropertyList = Traverse.Create(pluginCtrl).Field("MaterialTexturePropertyList").GetValue<List<MaterialTextureProperty>>();
-				MaterialTexturePropertyList.RemoveAll(x => x.CoordinateIndex == index && x.ObjectType == ObjectType.Accessory && x.Slot == slot);
-				List<MaterialShader> MaterialShaderList = Traverse.Create(pluginCtrl).Field("MaterialShaderList").GetValue<List<MaterialShader>>();
-				MaterialShaderList.RemoveAll(x => x.CoordinateIndex == index && x.ObjectType == ObjectType.Accessory && x.Slot == slot);
+				if (!Installed) return;
+				Traverse.Create(pluginCtrl).Method("AccessoryKindChangeEvent", new object[] { null, new AccessorySlotEventArgs(slot) }).GetValue();
 			}
 		}
 	}

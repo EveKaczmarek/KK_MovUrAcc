@@ -1,8 +1,6 @@
 ﻿using BepInEx;
 using HarmonyLib;
 
-using KKAPI.Chara;
-
 namespace MovUrAcc
 {
 	public partial class MovUrAcc
@@ -19,13 +17,13 @@ namespace MovUrAcc
 				if (PluginInstance != null) Installed = true;
 			}
 
-			internal static CharaCustomFunctionController GetController(ChaControl chaCtrl)
+			internal static object GetController(ChaControl chaCtrl)
 			{
 				if (!Installed) return null;
-				return Traverse.Create(PluginInstance).Method("GetController", new object[] { chaCtrl }).GetValue<CharaCustomFunctionController>();
+				return Traverse.Create(PluginInstance).Method("GetController", new object[] { chaCtrl }).GetValue();
 			}
 
-			internal static void ModifySetting(CharaCustomFunctionController pluginCtrl, int index, int srcSlot, int dstSlot)
+			internal static void ModifySetting(object pluginCtrl, int index, int srcSlot, int dstSlot)
 			{
 				if (!Installed) return;
 
@@ -37,10 +35,16 @@ namespace MovUrAcc
 				RemoveSetting(pluginCtrl, srcSlot);
 			}
 
-			internal static void RemoveSetting(CharaCustomFunctionController pluginCtrl, int slot)
+			internal static void RemoveSetting(object pluginCtrl, int slot)
 			{
 				if (!Installed) return;
 				Traverse.Create(pluginCtrl).Field("CurOutfitTriggerInfo").Property("Parts").Method("Remove", new object[] { slot }).GetValue();
+			}
+
+			internal static void SyncVirtualGroupInfo(object pluginCtrl, int index)
+			{
+				if (!Installed) return;
+				Traverse.Create(pluginCtrl).Method("SyncOutfitVirtualGroupInfo", new object[] { index }).GetValue();
 			}
 		}
 	}
