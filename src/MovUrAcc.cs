@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using UniRx;
 
 using BepInEx;
 using BepInEx.Logging;
@@ -19,10 +18,11 @@ namespace MovUrAcc
 	{
 		public const string GUID = "madevil.kk.MovUrAcc";
 		public const string PluginName = "MovUrAcc";
-		public const string Version = "1.2.0.0";
+		public const string Version = "1.3.0.0";
 
 		internal static new ManualLogSource Logger;
 		internal static bool IsDark;
+		internal static bool btnLock = false;
 
 		private void Start()
 		{
@@ -39,177 +39,32 @@ namespace MovUrAcc
 			{
 				MakerCategory category = new MakerCategory("05_ParameterTop", "tglMovUrAcc", MakerConstants.Parameter.Attribute.Position + 1, "MovUrAcc");
 
-				ev.AddControl(new MakerText("Batch transfer accessory slots", category, this));
-
-				MakerTextbox StartTextbox = ev.AddControl(new MakerTextbox(category, "Start", "", this));
-				MakerTextbox EndTextbox = ev.AddControl(new MakerTextbox(category, "End", "", this));
-
-				MakerTextbox NewStartTextbox = ev.AddControl(new MakerTextbox(category, "Shift first slot to", "", this));
-
-				MakerButton btnApply = ev.AddControl(new MakerButton("Go", category, this));
-				btnApply.OnClick.AddListener(delegate
-				{
-					int start = 0, end = 0, newstart = 0;
-					if (!int.TryParse(StartTextbox.Value, out start))
-					{
-						StartTextbox.Value = "";
-						start = 0;
-					}
-					if (!int.TryParse(EndTextbox.Value, out end))
-					{
-						EndTextbox.Value = "";
-						end = 0;
-					}
-					if (!int.TryParse(NewStartTextbox.Value, out newstart))
-					{
-						NewStartTextbox.Value = "";
-						newstart = 0;
-					}
-					ApplyShifting(start - 1, end - 1, newstart - 1);
-				});
-
+				CatBatchTransfer(ev, category);
 				ev.AddControl(new MakerSeparator(category, this));
 
-				ev.AddControl(new MakerText("Pack acc list by removing unused slots", category, this));
-
-				MakerButton btnPackSlots = ev.AddControl(new MakerButton("Go", category, this));
-				btnPackSlots.OnClick.AddListener(delegate
-				{
-					ApplyPacking();
-				});
-
+				CatBatchRemove(ev, category);
 				ev.AddControl(new MakerSeparator(category, this));
 
-				ev.AddControl(new MakerText("Remove hair accessories", category, this));
-
-				MakerToggle tglRemoveHairAccInverse = ev.AddControl(new MakerToggle(category, "Inverse selection", false, this));
-
-				MakerButton btnRemoveHairAcc = ev.AddControl(new MakerButton("Go", category, this));
-				btnRemoveHairAcc.OnClick.AddListener(delegate
-				{
-					RemoveHairAcc(tglRemoveHairAccInverse.Value);
-				});
-
+				CatPacking(ev, category);
 				ev.AddControl(new MakerSeparator(category, this));
 
-				ev.AddControl(new MakerText("Trim down unused MoreAccessories slots", category, this));
-
-				MakerButton btnMoreAccApply = ev.AddControl(new MakerButton("Go", category, this));
-				btnMoreAccApply.OnClick.AddListener(delegate
-				{
-					MoreAccessories.TrimUnusedSlots();
-				});
+				CatTrimMoreacc(ev, category);
 
 				ev.AddSubCategory(category);
+
+				btnLock = false;
 			};
 		}
 
-		internal static void ApplyShifting(int start, int end, int newstart)
+		internal void CatTrimMoreacc(RegisterSubCategoriesEvent ev, MakerCategory category)
 		{
-			int nowAccCount = MoreAccessories.PluginInstance._charaMakerData.nowAccessories.Count;
+			ev.AddControl(new MakerText("Trim down unused MoreAccessories slots", category, this));
 
-			if (start < 0)
-				start = 0;
-
-			if (end < 0)
-				end = nowAccCount + 19;
-			else if (end > nowAccCount + 19)
-				end = nowAccCount + 19;
-
-			if (newstart < 0)
-				newstart = 0;
-
-			if (start == newstart)
+			MakerButton btnMoreAccApply = ev.AddControl(new MakerButton("Go", category, this));
+			btnMoreAccApply.OnClick.AddListener(delegate
 			{
-				Logger.LogMessage($"Start and new start are the same, nothing to do");
-				return;
-			}
-
-			if (start > end)
-			{
-				Logger.LogMessage($"End value must be greater than start value");
-				return;
-			}
-
-			int amount = newstart - start;
-			Logger.LogDebug($"[start: {start + 1:00}][end: {end + 1:00}][newstart: {newstart + 1:00}][amount: {amount}]");
-
-			List<QueueItem> Queue = new List<QueueItem>();
-			for (int i = start; i <= end; i++)
-				Queue.Add(new QueueItem(i, i + amount));
-
-			if (amount > 0)
-			{
-				if (end + amount > 19)
-				{
-					Logger.LogDebug($"Expand MoreAccessories slots from {nowAccCount} to {end + amount - 19}");
-
-					for (int i = 0; i < (end + amount - 19 - nowAccCount); i++)
-						Traverse.Create(MoreAccessories.PluginInstance).Method("AddSlot").GetValue();
-				}
-
-				Queue = Queue.OrderByDescending(x => x.srcSlot).ToList();
-			}
-
-			ProcessQueue(Queue);
-		}
-
-		internal static void ApplyPacking()
-		{
-			List<QueueItem> Queue = new List<QueueItem>();
-			int nowAccCount = MoreAccessories.PluginInstance._charaMakerData.nowAccessories.Count;
-			int dstSlot = 0;
-
-			for (int srcSlot = 0; srcSlot < (20 + nowAccCount); srcSlot++)
-			{
-				ChaFileAccessory.PartsInfo part = AccessoriesApi.GetPartsInfo(srcSlot);
-				if (part.type == 120)
-					continue;
-
-				if (srcSlot != dstSlot)
-					Queue.Add(new QueueItem(srcSlot, dstSlot));
-
-				dstSlot++;
-			}
-
-			if (Queue.Count == 0)
-			{
-				Logger.LogMessage("Nothing to do");
-				return;
-			}
-
-			ProcessQueue(Queue);
-		}
-
-		internal static void RemoveHairAcc(bool inverse)
-		{
-			ChaControl chaCtrl = MakerAPI.GetCharacterControl();
-			object MEpluginCtrl = MaterialEditor.GetController(chaCtrl);
-			object HACpluginCtrl = HairAccessoryCustomizer.GetController(chaCtrl);
-			object ASSpluginCtrl = AccStateSync.GetController(chaCtrl);
-			int nowAccCount = MoreAccessories.PluginInstance._charaMakerData.nowAccessories.Count;
-			int Coordinate = chaCtrl.fileStatus.coordinateType;
-
-			for (int srcSlot = 0; srcSlot < (20 + nowAccCount); srcSlot++)
-			{
-				ChaFileAccessory.PartsInfo part = AccessoriesApi.GetPartsInfo(srcSlot);
-				if (part.type == 120)
-					continue;
-				if (!inverse && !IsHairAccessory(chaCtrl, srcSlot))
-					continue;
-				else if (inverse && IsHairAccessory(chaCtrl, srcSlot))
-					continue;
-
-				HairAccessoryCustomizer.RemoveSetting(HACpluginCtrl, srcSlot);
-				MaterialEditor.RemoveSetting(MEpluginCtrl, srcSlot);
-				AccStateSync.RemoveSetting(ASSpluginCtrl, srcSlot);
-				MoreAccessories.ResetPartsInfo(chaCtrl, Coordinate, srcSlot);
-			}
-
-			AccStateSync.SyncVirtualGroupInfo(ASSpluginCtrl, Coordinate);
-
-			ChaCustom.CustomBase.Instance.chaCtrl.ChangeCoordinateTypeAndReload(false);
-			Singleton<ChaCustom.CustomBase>.Instance.updateCustomUI = true;
+				MoreAccessories.TrimUnusedSlots();
+			});
 		}
 
 		internal class QueueItem
@@ -235,6 +90,7 @@ namespace MovUrAcc
 
 			foreach (QueueItem item in Queue)
 			{
+				Logger.LogDebug($"{item.srcSlot} -> {item.dstSlot}");
 				HairAccessoryCustomizer.StoreSetting(chaCtrl, HACpluginCtrl, item.srcSlot); // need to do this before move PartsInfo
 				MoreAccessories.ModifyPartsInfo(chaCtrl, Coordinate, item.srcSlot, item.dstSlot);
 				MaterialEditor.ModifySetting(MEpluginCtrl, Coordinate, item.srcSlot, item.dstSlot);

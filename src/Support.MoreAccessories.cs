@@ -56,11 +56,16 @@ namespace MovUrAcc
 
 			internal static void TrimUnusedSlots()
 			{
+				if (btnLock)
+					return;
+				btnLock = true;
+
 				int n = PluginInstance._charaMakerData.nowAccessories.Count;
 
 				if (n == 0)
 				{
 					Logger.LogMessage("No MoreAccessories slot, nothing to do");
+					btnLock = false;
 					return;
 				}
 
@@ -74,11 +79,14 @@ namespace MovUrAcc
 				if (i == n - 1)
 				{
 					Logger.LogMessage("Last slot is being used, nothing to do");
+					btnLock = false;
 					return;
 				}
 
 				PluginInstance._charaMakerData.nowAccessories.RemoveRange(i + 1, n - 1 - i);
 				ChaCustom.CustomBase.Instance.chaCtrl.ChangeCoordinateTypeAndReload(false);
+
+				btnLock = false;
 			}
 		}
 	}

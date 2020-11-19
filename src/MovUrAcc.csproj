@@ -70,6 +70,9 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Module.BatchRemove.cs" />
+    <Compile Include="Module.BatchTransfer.cs" />
+    <Compile Include="Module.Packing.cs" />
     <Compile Include="MovUrAcc.cs" />
     <Compile Include="Support.MoreAccessories.cs" />
     <Compile Include="Support.MaterialEditor.cs" />
