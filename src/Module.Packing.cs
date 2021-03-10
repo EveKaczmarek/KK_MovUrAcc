@@ -30,7 +30,7 @@ namespace MovUrAcc
 
 			for (int srcSlot = 0; srcSlot < (20 + nowAccCount); srcSlot++)
 			{
-				ChaFileAccessory.PartsInfo part = AccessoriesApi.GetPartsInfo(srcSlot);
+				ChaFileAccessory.PartsInfo part = MoreAccessories.GetPartsInfo(srcSlot);
 				if (part.type == 120)
 					continue;
 

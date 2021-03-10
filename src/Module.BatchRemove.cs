@@ -63,11 +63,12 @@ namespace MovUrAcc
 			object MEpluginCtrl = MaterialEditor.GetController(chaCtrl);
 			object HACpluginCtrl = HairAccessoryCustomizer.GetController(chaCtrl);
 			object ASSpluginCtrl = AccStateSync.GetController(chaCtrl);
+			object MRpluginCtrl = MaterialRouter.GetController(chaCtrl);
 			int Coordinate = chaCtrl.fileStatus.coordinateType;
 
 			for (int i = start; i <= end; i++)
 			{
-				ChaFileAccessory.PartsInfo part = AccessoriesApi.GetPartsInfo(i);
+				ChaFileAccessory.PartsInfo part = MoreAccessories.GetPartsInfo(i);
 				if (part.type == 120)
 					continue;
 				if (mode == 1 && !IsHairAccessory(chaCtrl, i))
@@ -78,6 +79,7 @@ namespace MovUrAcc
 				HairAccessoryCustomizer.RemoveSetting(HACpluginCtrl, i);
 				MaterialEditor.RemoveSetting(MEpluginCtrl, i);
 				AccStateSync.RemoveSetting(ASSpluginCtrl, i);
+				MaterialRouter.RemoveSetting(MRpluginCtrl, Coordinate, i);
 				MoreAccessories.ResetPartsInfo(chaCtrl, Coordinate, i);
 			}
 

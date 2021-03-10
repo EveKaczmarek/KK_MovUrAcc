@@ -95,7 +95,7 @@ namespace MovUrAcc
 
 				for (int i = start; i <= end; i++)
 				{
-					ChaFileAccessory.PartsInfo part = AccessoriesApi.GetPartsInfo(i);
+					ChaFileAccessory.PartsInfo part = MoreAccessories.GetPartsInfo(i);
 					if (part.type == 120)
 						continue;
 					if (mode == 1 && !IsHairAccessory(chaCtrl, i))

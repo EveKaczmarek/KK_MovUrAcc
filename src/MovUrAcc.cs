@@ -18,7 +18,7 @@ namespace MovUrAcc
 	{
 		public const string GUID = "madevil.kk.MovUrAcc";
 		public const string PluginName = "MovUrAcc";
-		public const string Version = "1.3.0.0";
+		public const string Version = "1.4.0.0";
 
 		internal static new ManualLogSource Logger;
 		internal static bool IsDark;
@@ -34,6 +34,7 @@ namespace MovUrAcc
 			MaterialEditor.InitSupport();
 			HairAccessoryCustomizer.InitSupport();
 			AccStateSync.InitSupport();
+			MaterialRouter.InitSupport();
 
 			MakerAPI.RegisterCustomSubCategories += (object sender, RegisterSubCategoriesEvent ev) =>
 			{
@@ -84,6 +85,7 @@ namespace MovUrAcc
 			object MEpluginCtrl = MaterialEditor.GetController(chaCtrl);
 			object HACpluginCtrl = HairAccessoryCustomizer.GetController(chaCtrl);
 			object ASSpluginCtrl = AccStateSync.GetController(chaCtrl);
+			object MRpluginCtrl = MaterialRouter.GetController(chaCtrl);
 
 			HairAccessoryCustomizer.HairAccessoryInfos = new Dictionary<int, HairAccessoryCustomizer.HairAccessoryInfo>();
 			int Coordinate = chaCtrl.fileStatus.coordinateType;
@@ -95,6 +97,7 @@ namespace MovUrAcc
 				MoreAccessories.ModifyPartsInfo(chaCtrl, Coordinate, item.srcSlot, item.dstSlot);
 				MaterialEditor.ModifySetting(MEpluginCtrl, Coordinate, item.srcSlot, item.dstSlot);
 				AccStateSync.ModifySetting(ASSpluginCtrl, Coordinate, item.srcSlot, item.dstSlot);
+				MaterialRouter.ModifySetting(MRpluginCtrl, Coordinate, item.srcSlot, item.dstSlot);
 			}
 
 			ChaCustom.CustomBase.Instance.chaCtrl.ChangeCoordinateTypeAndReload(false);
@@ -108,7 +111,7 @@ namespace MovUrAcc
 		{
 			try
 			{
-				ChaAccessoryComponent accessory = AccessoriesApi.GetAccessory(chaCtrl, slot);
+				ChaAccessoryComponent accessory = chaCtrl.GetAccessoryObject(slot)?.GetComponent<ChaAccessoryComponent>();
 				if (accessory == null)
 					return false;
 				return accessory.gameObject?.GetComponent<ChaCustomHairComponent>() != null;

@@ -1,8 +1,11 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 
 using BepInEx;
 using HarmonyLib;
+
 using MessagePack;
+using ChaCustom;
 
 using KKAPI.Maker;
 
@@ -20,6 +23,15 @@ namespace MovUrAcc
 				PluginInstance = (MoreAccessoriesKOI.MoreAccessories) PluginInfo.Instance;
 			}
 
+			internal static ChaFileAccessory.PartsInfo GetPartsInfo(int slot)
+			{
+				ChaControl chaCtrl = CustomBase.Instance.chaCtrl;
+				if (slot < 20)
+					return chaCtrl.nowCoordinate.accessory.parts[slot];
+				else
+					return PluginInstance._charaMakerData.nowAccessories.ElementAtOrDefault(slot - 20);
+			}
+
 			internal static void ModifyPartsInfo(ChaControl chaCtrl, int index, int srcSlot, int dstSlot)
 			{
 				bool noShake = false;
@@ -27,7 +39,7 @@ namespace MovUrAcc
 				ChaFileAccessory.PartsInfo[] parts = chaCtrl.chaFile.coordinate[index].accessory.parts;
 				List<ChaFileAccessory.PartsInfo> nowAccessories = PluginInstance._charaMakerData.nowAccessories;
 
-				ChaFileAccessory.PartsInfo part = AccessoriesApi.GetPartsInfo(srcSlot);
+				ChaFileAccessory.PartsInfo part = GetPartsInfo(srcSlot);
 				byte[] bytes = MessagePackSerializer.Serialize(part);
 
 				if (IsDark && part.noShake)
@@ -43,7 +55,11 @@ namespace MovUrAcc
 					nowAccessories[dstSlot - 20] = MessagePackSerializer.Deserialize<ChaFileAccessory.PartsInfo>(bytes);
 
 				if (noShake)
-					Traverse.Create(AccessoriesApi.GetCvsAccessory(dstSlot)).Field("tglNoShake").Property("isOn").SetValue(noShake);
+					Traverse.Create(GetCvsAccessory(dstSlot)).Field("tglNoShake").Property("isOn").SetValue(noShake);
+			}
+			internal static CvsAccessory GetCvsAccessory(int slot)
+			{
+				return Traverse.Create(PluginInstance).Method("GetCvsAccessory", new object[] { slot }).GetValue<CvsAccessory>();
 			}
 
 			internal static void ResetPartsInfo(ChaControl chaCtrl, int index, int slot)
