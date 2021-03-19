@@ -64,6 +64,7 @@ namespace MovUrAcc
 			object HACpluginCtrl = HairAccessoryCustomizer.GetController(chaCtrl);
 			object ASSpluginCtrl = AccStateSync.GetController(chaCtrl);
 			object MRpluginCtrl = MaterialRouter.GetController(chaCtrl);
+			object DBEpluginCtrl = DynamicBoneEditor.GetController(chaCtrl);
 			int Coordinate = chaCtrl.fileStatus.coordinateType;
 
 			for (int i = start; i <= end; i++)
@@ -80,13 +81,14 @@ namespace MovUrAcc
 				MaterialEditor.RemoveSetting(MEpluginCtrl, i);
 				AccStateSync.RemoveSetting(ASSpluginCtrl, i);
 				MaterialRouter.RemoveSetting(MRpluginCtrl, Coordinate, i);
+				DynamicBoneEditor.RemoveSetting(DBEpluginCtrl, Coordinate, i);
 				MoreAccessories.ResetPartsInfo(chaCtrl, Coordinate, i);
 			}
 
 			AccStateSync.SyncVirtualGroupInfo(ASSpluginCtrl, Coordinate);
 
 			ChaCustom.CustomBase.Instance.chaCtrl.ChangeCoordinateTypeAndReload(false);
-			Singleton<ChaCustom.CustomBase>.Instance.updateCustomUI = true;
+			ChaCustom.CustomBase.Instance.updateCustomUI = true;
 
 			btnLock = false;
 		}

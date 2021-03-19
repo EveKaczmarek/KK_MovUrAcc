@@ -79,6 +79,7 @@
     <Compile Include="Support.MaterialRouter.cs" />
     <Compile Include="Support.MoreAccessories.cs" />
     <Compile Include="Support.MaterialEditor.cs" />
+    <Compile Include="Support.DynamicBoneEditor.cs" />
     <Compile Include="Support.HairAccessoryCustomizer.cs" />
     <Compile Include="Support.AccStateSync.cs" />
     <Compile Include="AssemblyInfo.cs" />
