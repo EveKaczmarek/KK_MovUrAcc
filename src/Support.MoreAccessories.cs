@@ -100,9 +100,9 @@ namespace MovUrAcc
 				}
 
 				PluginInstance._charaMakerData.nowAccessories.RemoveRange(i + 1, n - 1 - i);
-				ChaCustom.CustomBase.Instance.chaCtrl.ChangeCoordinateTypeAndReload(false);
 
 				btnLock = false;
+				CustomBase.Instance.chaCtrl.ChangeCoordinateTypeAndReload(false);
 			}
 		}
 	}

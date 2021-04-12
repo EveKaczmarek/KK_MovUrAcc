@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 
 using BepInEx;
@@ -18,14 +19,17 @@ namespace MovUrAcc
 	{
 		public const string GUID = "madevil.kk.MovUrAcc";
 		public const string PluginName = "MovUrAcc";
-		public const string Version = "1.5.0.0";
+		public const string Version = "1.6.0.0";
 
 		internal static new ManualLogSource Logger;
+		internal static Harmony HooksInstance;
+		internal static MovUrAcc Instance;
 		internal static bool IsDark;
 		internal static bool btnLock = false;
 
 		private void Start()
 		{
+			Instance = this;
 			Logger = base.Logger;
 
 			IsDark = typeof(ChaControl).GetProperties(AccessTools.all).Any(x => x.Name == "exType");
@@ -37,8 +41,11 @@ namespace MovUrAcc
 			MaterialRouter.InitSupport();
 			DynamicBoneEditor.InitSupport();
 
-			MakerAPI.RegisterCustomSubCategories += (object sender, RegisterSubCategoriesEvent ev) =>
+			MakerAPI.RegisterCustomSubCategories += (sender, ev) =>
 			{
+				HooksInstance = Harmony.CreateAndPatchAll(typeof(Hooks));
+				MaterialEditor.HookInit();
+
 				MakerCategory category = new MakerCategory("05_ParameterTop", "tglMovUrAcc", MakerConstants.Parameter.Attribute.Position + 1, "MovUrAcc");
 
 				CatBatchTransfer(ev, category);
@@ -55,6 +62,12 @@ namespace MovUrAcc
 				ev.AddSubCategory(category);
 
 				btnLock = false;
+			};
+
+			MakerAPI.MakerExiting += (sender, ev) =>
+			{
+				HooksInstance.UnpatchAll(HooksInstance.Id);
+				HooksInstance = null;
 			};
 		}
 
@@ -77,6 +90,31 @@ namespace MovUrAcc
 			{
 				srcSlot = src;
 				dstSlot = dst;
+			}
+		}
+
+		internal class Hooks
+		{
+			internal static bool DuringLoading_Prefix()
+			{
+				return !btnLock;
+			}
+
+			internal static bool DuringLoading_Co_Prefix(ref IEnumerator __result)
+			{
+				if (btnLock)
+				{
+					IEnumerator original = __result;
+					__result = new[] { original, Postfix() }.GetEnumerator();
+					return false;
+				}
+
+				return true;
+
+				IEnumerator Postfix()
+				{
+					yield break;
+				}
 			}
 		}
 

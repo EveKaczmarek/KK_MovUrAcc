@@ -132,6 +132,7 @@ namespace MovUrAcc
 			ProcessQueue(Queue);
 
 			btnLock = false;
+			ChaCustom.CustomBase.Instance.chaCtrl.ChangeCoordinateTypeAndReload(false);
 		}
 	}
 }

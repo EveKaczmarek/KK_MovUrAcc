@@ -1,4 +1,6 @@
-﻿using BepInEx;
+﻿using System;
+
+using BepInEx;
 using HarmonyLib;
 
 namespace MovUrAcc
@@ -17,6 +19,15 @@ namespace MovUrAcc
 				if (PluginInstance != null) Installed = true;
 			}
 
+			internal static void HookInit()
+			{
+				if (!Installed) return;
+
+				Type AccStateSyncController = PluginInstance.GetType().Assembly.GetType("AccStateSync.AccStateSync+AccStateSyncController");
+				HooksInstance.Patch(AccStateSyncController.GetMethod("AccSlotChangedHandler", AccessTools.all, null, new[] { typeof(int) }, null), prefix: new HarmonyMethod(typeof(Hooks), nameof(Hooks.DuringLoading_Prefix)));
+				HooksInstance.Patch(AccStateSyncController.GetMethod("SyncOutfitVirtualGroupInfo", AccessTools.all, null, new[] { typeof(int) }, null), prefix: new HarmonyMethod(typeof(Hooks), nameof(Hooks.DuringLoading_Prefix)));
+			}
+
 			internal static object GetController(ChaControl chaCtrl)
 			{
 				if (!Installed) return null;
@@ -27,18 +38,20 @@ namespace MovUrAcc
 			{
 				if (!Installed) return;
 
-				RemoveSetting(pluginCtrl, dstSlot);
-				if (!Traverse.Create(pluginCtrl).Field("CurOutfitTriggerInfo").Property("Parts").Method("ContainsKey", new object[] { srcSlot }).GetValue<bool>())
+				RemoveSetting(pluginCtrl, index, dstSlot);
+				object CurOutfitTriggerInfo = Traverse.Create(pluginCtrl).Field("CharaTriggerInfo").GetValue().RefTryGetValue(index);
+				if (!Traverse.Create(CurOutfitTriggerInfo).Property("Parts").Method("ContainsKey", new object[] { srcSlot }).GetValue<bool>())
 					return;
 
 				Traverse.Create(pluginCtrl).Method("AccessoryTransferredHandler", new object[] { srcSlot, dstSlot, index }).GetValue();
-				RemoveSetting(pluginCtrl, srcSlot);
+				RemoveSetting(pluginCtrl, index, srcSlot);
 			}
 
-			internal static void RemoveSetting(object pluginCtrl, int slot)
+			internal static void RemoveSetting(object pluginCtrl, int index, int slot)
 			{
 				if (!Installed) return;
-				Traverse.Create(pluginCtrl).Field("CurOutfitTriggerInfo").Property("Parts").Method("Remove", new object[] { slot }).GetValue();
+				object CurOutfitTriggerInfo = Traverse.Create(pluginCtrl).Field("CharaTriggerInfo").GetValue().RefTryGetValue(index);
+				Traverse.Create(CurOutfitTriggerInfo).Property("Parts").Method("Remove", new object[] { slot }).GetValue();
 			}
 
 			internal static void SyncVirtualGroupInfo(object pluginCtrl, int index)

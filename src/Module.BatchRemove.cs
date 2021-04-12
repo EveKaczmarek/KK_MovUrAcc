@@ -79,7 +79,7 @@ namespace MovUrAcc
 
 				HairAccessoryCustomizer.RemoveSetting(HACpluginCtrl, i);
 				MaterialEditor.RemoveSetting(MEpluginCtrl, i);
-				AccStateSync.RemoveSetting(ASSpluginCtrl, i);
+				AccStateSync.RemoveSetting(ASSpluginCtrl, Coordinate, i);
 				MaterialRouter.RemoveSetting(MRpluginCtrl, Coordinate, i);
 				DynamicBoneEditor.RemoveSetting(DBEpluginCtrl, Coordinate, i);
 				MoreAccessories.ResetPartsInfo(chaCtrl, Coordinate, i);
@@ -87,10 +87,9 @@ namespace MovUrAcc
 
 			AccStateSync.SyncVirtualGroupInfo(ASSpluginCtrl, Coordinate);
 
+			btnLock = false;
 			ChaCustom.CustomBase.Instance.chaCtrl.ChangeCoordinateTypeAndReload(false);
 			ChaCustom.CustomBase.Instance.updateCustomUI = true;
-
-			btnLock = false;
 		}
 	}
 }

@@ -1,4 +1,6 @@
-﻿using BepInEx;
+﻿using System;
+
+using BepInEx;
 using HarmonyLib;
 
 using KKAPI.Maker;
@@ -17,6 +19,12 @@ namespace MovUrAcc
 				BepInEx.Bootstrap.Chainloader.PluginInfos.TryGetValue("com.deathweasel.bepinex.materialeditor", out PluginInfo PluginInfo);
 				PluginInstance = PluginInfo?.Instance;
 				if (PluginInstance != null) Installed = true;
+			}
+
+			internal static void HookInit()
+			{
+				Type MaterialEditorCharaController = PluginInstance.GetType().Assembly.GetType("KK_Plugins.MaterialEditor.MaterialEditorCharaController");
+				HooksInstance.Patch(MaterialEditorCharaController.GetMethod("LoadData", AccessTools.all, null, new[] { typeof(bool), typeof(bool), typeof(bool) }, null), prefix: new HarmonyMethod(typeof(Hooks), nameof(Hooks.DuringLoading_Co_Prefix)));
 			}
 
 			internal static object GetController(ChaControl chaCtrl)
