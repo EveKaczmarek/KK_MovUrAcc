@@ -11,15 +11,16 @@ using KKAPI.Maker.UI;
 
 namespace MovUrAcc
 {
-	[BepInPlugin(GUID, PluginName, Version)]
-	[BepInDependency("marco.kkapi")]
 	[BepInProcess("Koikatu")]
 	[BepInProcess("Koikatsu Party")]
+	[BepInDependency("marco.kkapi", "1.17")]
+	[BepInDependency("com.joan6694.illusionplugins.moreaccessories", "1.0.9")]
+	[BepInPlugin(GUID, PluginName, Version)]
 	public partial class MovUrAcc : BaseUnityPlugin
 	{
 		public const string GUID = "madevil.kk.MovUrAcc";
 		public const string PluginName = "MovUrAcc";
-		public const string Version = "1.6.0.0";
+		public const string Version = "1.7.0.0";
 
 		internal static new ManualLogSource Logger;
 		internal static Harmony HooksInstance;

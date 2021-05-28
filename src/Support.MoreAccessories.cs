@@ -38,7 +38,11 @@ namespace MovUrAcc
 
 				ChaFileAccessory.PartsInfo[] parts = chaCtrl.chaFile.coordinate[index].accessory.parts;
 				List<ChaFileAccessory.PartsInfo> nowAccessories = PluginInstance._charaMakerData.nowAccessories;
-
+				/*
+				bool[] showAccessory = CustomBase.Instance.chaCtrl.fileStatus.showAccessory;
+				List<bool> showAccessories = PluginInstance._charaMakerData.showAccessories;
+				bool show = srcSlot < 20 ? showAccessory[srcSlot] : showAccessories.ElementAtOrDefault(srcSlot);
+				*/
 				ChaFileAccessory.PartsInfo part = GetPartsInfo(srcSlot);
 				byte[] bytes = MessagePackSerializer.Serialize(part);
 
@@ -50,9 +54,15 @@ namespace MovUrAcc
 				ResetPartsInfo(chaCtrl, index, srcSlot);
 
 				if (dstSlot < 20)
+				{
 					parts[dstSlot] = MessagePackSerializer.Deserialize<ChaFileAccessory.PartsInfo>(bytes);
+					//CustomBase.Instance.chaCtrl.fileStatus.showAccessory[dstSlot] = show;
+				}
 				else
+				{
 					nowAccessories[dstSlot - 20] = MessagePackSerializer.Deserialize<ChaFileAccessory.PartsInfo>(bytes);
+					//PluginInstance._charaMakerData.showAccessories[dstSlot - 20] = show;
+				}
 
 				if (noShake)
 					Traverse.Create(GetCvsAccessory(dstSlot)).Field("tglNoShake").Property("isOn").SetValue(noShake);
