@@ -20,7 +20,7 @@ namespace MovUrAcc
 	{
 		public const string GUID = "madevil.kk.MovUrAcc";
 		public const string PluginName = "MovUrAcc";
-		public const string Version = "1.7.0.0";
+		public const string Version = "1.8.0.0";
 
 		internal static new ManualLogSource Logger;
 		internal static Harmony HooksInstance;
@@ -53,6 +53,9 @@ namespace MovUrAcc
 				ev.AddControl(new MakerSeparator(category, this));
 
 				CatBatchRemove(ev, category);
+				ev.AddControl(new MakerSeparator(category, this));
+
+				CatParentSort(ev, category);
 				ev.AddControl(new MakerSeparator(category, this));
 
 				CatPacking(ev, category);

@@ -51,13 +51,27 @@ namespace MovUrAcc
 
 			int nowAccCount = MoreAccessories.PluginInstance._charaMakerData.nowAccessories.Count;
 
+			Dictionary<int, int> parts = new Dictionary<int, int>();
+
+			for (int i = 0; i < (20 + nowAccCount); i++)
+			{
+				ChaFileAccessory.PartsInfo part = MoreAccessories.GetPartsInfo(i);
+				if (part.type == 120)
+					continue;
+				parts[i] = part.type;
+			}
+
 			if (start < 0)
-				start = 0;
+			{
+				if (parts.Count > 0)
+					start = parts.First().Key;
+			}
 
 			if (end < 0)
-				end = nowAccCount + 19;
-			else if (end > nowAccCount + 19)
-				end = nowAccCount + 19;
+			{
+				if (parts.Count > 0)
+					end = parts.Last().Key;
+			}
 
 			if (newstart < 0)
 				newstart = 0;
