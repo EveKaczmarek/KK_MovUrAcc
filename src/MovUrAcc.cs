@@ -20,7 +20,7 @@ namespace MovUrAcc
 	{
 		public const string GUID = "madevil.kk.MovUrAcc";
 		public const string PluginName = "MovUrAcc";
-		public const string Version = "1.8.0.0";
+		public const string Version = "1.9.0.0";
 
 		internal static new ManualLogSource Logger;
 		internal static Harmony HooksInstance;
@@ -41,6 +41,7 @@ namespace MovUrAcc
 			AccStateSync.InitSupport();
 			MaterialRouter.InitSupport();
 			DynamicBoneEditor.InitSupport();
+			AAAPK.InitSupport();
 
 			MakerAPI.RegisterCustomSubCategories += (sender, ev) =>
 			{
@@ -130,6 +131,7 @@ namespace MovUrAcc
 			object ASSpluginCtrl = AccStateSync.GetController(chaCtrl);
 			object MRpluginCtrl = MaterialRouter.GetController(chaCtrl);
 			object DBEpluginCtrl = DynamicBoneEditor.GetController(chaCtrl);
+			object APKpluginCtrl = AAAPK.GetController(chaCtrl);
 
 			HairAccessoryCustomizer.HairAccessoryInfos = new Dictionary<int, HairAccessoryCustomizer.HairAccessoryInfo>();
 			int Coordinate = chaCtrl.fileStatus.coordinateType;
@@ -143,6 +145,7 @@ namespace MovUrAcc
 				AccStateSync.ModifySetting(ASSpluginCtrl, Coordinate, item.srcSlot, item.dstSlot);
 				MaterialRouter.ModifySetting(MRpluginCtrl, Coordinate, item.srcSlot, item.dstSlot);
 				DynamicBoneEditor.ModifySetting(DBEpluginCtrl, Coordinate, item.srcSlot, item.dstSlot);
+				AAAPK.ModifySetting(APKpluginCtrl, Coordinate, item.srcSlot, item.dstSlot);
 			}
 
 			ChaCustom.CustomBase.Instance.chaCtrl.ChangeCoordinateTypeAndReload(false);

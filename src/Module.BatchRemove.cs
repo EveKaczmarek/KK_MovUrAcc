@@ -65,6 +65,7 @@ namespace MovUrAcc
 			object ASSpluginCtrl = AccStateSync.GetController(chaCtrl);
 			object MRpluginCtrl = MaterialRouter.GetController(chaCtrl);
 			object DBEpluginCtrl = DynamicBoneEditor.GetController(chaCtrl);
+			object APKpluginCtrl = AAAPK.GetController(chaCtrl);
 			int Coordinate = chaCtrl.fileStatus.coordinateType;
 
 			for (int i = start; i <= end; i++)
@@ -82,6 +83,7 @@ namespace MovUrAcc
 				AccStateSync.RemoveSetting(ASSpluginCtrl, Coordinate, i);
 				MaterialRouter.RemoveSetting(MRpluginCtrl, Coordinate, i);
 				DynamicBoneEditor.RemoveSetting(DBEpluginCtrl, Coordinate, i);
+				AAAPK.RemoveSetting(APKpluginCtrl, Coordinate, i);
 				MoreAccessories.ResetPartsInfo(chaCtrl, Coordinate, i);
 			}
 

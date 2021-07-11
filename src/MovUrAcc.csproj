@@ -82,6 +82,7 @@
     <Compile Include="Support.DynamicBoneEditor.cs" />
     <Compile Include="Support.HairAccessoryCustomizer.cs" />
     <Compile Include="Support.AccStateSync.cs" />
+    <Compile Include="Support.AAAPK.cs" />
     <Compile Include="AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
