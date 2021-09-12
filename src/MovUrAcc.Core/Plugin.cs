@@ -11,21 +11,23 @@ using KKAPI.Maker.UI;
 
 namespace MovUrAcc
 {
-#if MoreAcc
+#if KK
 	[BepInProcess("Koikatu")]
 	[BepInProcess("Koikatsu Party")]
 	[BepInDependency("marco.kkapi", "1.17")]
-	[BepInDependency("com.joan6694.illusionplugins.moreaccessories", "1.1.0")]
 #else
 	[BepInProcess("KoikatsuSunshine")]
 	[BepInDependency("marco.kkapi", "1.24")]
+#endif
+#if MoreAcc
+	[BepInDependency("com.joan6694.illusionplugins.moreaccessories", "1.1.0")]
 #endif
 	[BepInPlugin(GUID, PluginName, Version)]
 	public partial class MovUrAcc : BaseUnityPlugin
 	{
 		public const string GUID = "madevil.kk.MovUrAcc";
 		public const string PluginName = "MovUrAcc";
-		public const string Version = "1.10.0.0";
+		public const string Version = "1.10.1.0";
 
 		internal static new ManualLogSource Logger;
 		internal static Harmony HooksInstance;
@@ -49,6 +51,7 @@ namespace MovUrAcc
 			MaterialRouter.InitSupport();
 			DynamicBoneEditor.InitSupport();
 			AAAPK.InitSupport();
+			BendUrAcc.InitSupport();
 
 			MakerAPI.RegisterCustomSubCategories += (sender, ev) =>
 			{
@@ -138,6 +141,7 @@ namespace MovUrAcc
 			object MRpluginCtrl = MaterialRouter.GetController(chaCtrl);
 			object DBEpluginCtrl = DynamicBoneEditor.GetController(chaCtrl);
 			object APKpluginCtrl = AAAPK.GetController(chaCtrl);
+			object BUApluginCtrl = BendUrAcc.GetController(chaCtrl);
 
 			HairAccessoryCustomizer.HairAccessoryInfos = new Dictionary<int, HairAccessoryCustomizer.HairAccessoryInfo>();
 			int Coordinate = chaCtrl.fileStatus.coordinateType;
@@ -152,6 +156,7 @@ namespace MovUrAcc
 				MaterialRouter.ModifySetting(MRpluginCtrl, Coordinate, item.srcSlot, item.dstSlot);
 				DynamicBoneEditor.ModifySetting(DBEpluginCtrl, Coordinate, item.srcSlot, item.dstSlot);
 				AAAPK.ModifySetting(APKpluginCtrl, Coordinate, item.srcSlot, item.dstSlot);
+				BendUrAcc.ModifySetting(BUApluginCtrl, Coordinate, item.srcSlot, item.dstSlot);
 			}
 
 			ChaCustom.CustomBase.Instance.chaCtrl.ChangeCoordinateTypeAndReload(false);

@@ -70,6 +70,7 @@ namespace MovUrAcc
 			object MRpluginCtrl = MaterialRouter.GetController(chaCtrl);
 			object DBEpluginCtrl = DynamicBoneEditor.GetController(chaCtrl);
 			object APKpluginCtrl = AAAPK.GetController(chaCtrl);
+			object BUApluginCtrl = BendUrAcc.GetController(chaCtrl);
 			int Coordinate = chaCtrl.fileStatus.coordinateType;
 
 			for (int i = start; i <= end; i++)
@@ -88,6 +89,7 @@ namespace MovUrAcc
 				MaterialRouter.RemoveSetting(MRpluginCtrl, Coordinate, i);
 				DynamicBoneEditor.RemoveSetting(DBEpluginCtrl, Coordinate, i);
 				AAAPK.RemoveSetting(APKpluginCtrl, Coordinate, i);
+				BendUrAcc.RemoveSetting(BUApluginCtrl, Coordinate, i);
 				MoreAccessories.ResetPartsInfo(chaCtrl, Coordinate, i);
 			}
 

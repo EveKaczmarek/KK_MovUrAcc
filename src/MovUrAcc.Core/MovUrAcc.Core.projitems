@@ -16,6 +16,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Module\Module.BatchTransfer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Module\Module.Packing.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Module\Module.ParentSort.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Support\Support.BendUrAcc.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Support\Support.MaterialRouter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Support\Support.MoreAccessories.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Support\Support.MaterialEditor.cs" />
