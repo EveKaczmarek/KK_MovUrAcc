@@ -24,15 +24,17 @@ namespace MovUrAcc
 				return;
 			btnLock = true;
 
+			ChaControl chaCtrl = ChaCustom.CustomBase.Instance.chaCtrl;
+
 			List<QueueItem> Queue = new List<QueueItem>();
 #if MoreAcc
-			int nowAccCount = MoreAccessories.PluginInstance._charaMakerData.nowAccessories.Count;
+			int nowAccCount = MoreAccessories.PluginInstance._charaMakerData.nowAccessories.Count + 20;
 #else
-			int nowAccCount = 0;
+			int nowAccCount = chaCtrl.nowCoordinate.accessory.parts.Length;
 #endif
 			int dstSlot = 0;
 
-			for (int srcSlot = 0; srcSlot < (20 + nowAccCount); srcSlot++)
+			for (int srcSlot = 0; srcSlot < nowAccCount; srcSlot++)
 			{
 				ChaFileAccessory.PartsInfo part = MoreAccessories.GetPartsInfo(srcSlot);
 				if (part.type == 120)
@@ -54,7 +56,7 @@ namespace MovUrAcc
 			ProcessQueue(Queue);
 
 			btnLock = false;
-			ChaCustom.CustomBase.Instance.chaCtrl.ChangeCoordinateTypeAndReload(false);
+			chaCtrl.ChangeCoordinateTypeAndReload(false);
 		}
 	}
 }

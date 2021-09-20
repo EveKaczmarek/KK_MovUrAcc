@@ -1,4 +1,6 @@
-﻿using BepInEx;
+﻿using System;
+
+using BepInEx;
 using HarmonyLib;
 
 namespace MovUrAcc
@@ -15,6 +17,12 @@ namespace MovUrAcc
 				BepInEx.Bootstrap.Chainloader.PluginInfos.TryGetValue("madevil.kk.BendUrAcc", out PluginInfo PluginInfo);
 				PluginInstance = PluginInfo?.Instance;
 				if (PluginInstance != null) Installed = true;
+
+				if (PluginInfo.Metadata.Version.CompareTo(new Version("1.0.5.0")) < 0)
+				{
+					Logger.LogError($"BendUrAcc 1.0.5.0 is required to work properly, version {PluginInfo.Metadata.Version} detected");
+					Installed = false;
+				}
 			}
 
 			internal static object GetController(ChaControl chaCtrl)
@@ -28,7 +36,7 @@ namespace MovUrAcc
 			{
 				if (!Installed) return;
 
-				Traverse.Create(pluginCtrl).Method("CloneRule", new object[] { srcSlot, dstSlot, index, index }).GetValue();
+				Traverse.Create(pluginCtrl).Method("CloneModifier", new object[] { srcSlot, dstSlot, index, index }).GetValue();
 				Traverse.Create(pluginCtrl).Method("RemoveSlotModifier", new object[] { index, srcSlot }).GetValue();
 			}
 

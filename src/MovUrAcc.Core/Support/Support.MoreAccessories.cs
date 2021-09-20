@@ -29,7 +29,7 @@ namespace MovUrAcc
 #if MoreAcc
 				PluginInstance = (MoreAccessoriesKOI.MoreAccessories) PluginInfo.Instance;
 #else
-				PluginInstance = PluginInfo.Instance;
+				PluginInstance = PluginInfo?.Instance;
 #endif
 				if (PluginInstance != null) Installed = true;
 			}
