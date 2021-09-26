@@ -6,6 +6,7 @@ using BepInEx;
 using BepInEx.Logging;
 using HarmonyLib;
 
+using KKAPI;
 using KKAPI.Maker;
 using KKAPI.Maker.UI;
 
@@ -14,11 +15,10 @@ namespace MovUrAcc
 #if KK
 	[BepInProcess("Koikatu")]
 	[BepInProcess("Koikatsu Party")]
-	[BepInDependency("marco.kkapi", "1.17")]
 #else
 	[BepInProcess("KoikatsuSunshine")]
-	[BepInDependency("marco.kkapi", "1.24")]
 #endif
+	[BepInDependency(KoikatuAPI.GUID, KoikatuAPI.VersionConst)]
 #if MoreAcc
 	[BepInDependency("com.joan6694.illusionplugins.moreaccessories", "1.1.0")]
 #endif
@@ -27,7 +27,7 @@ namespace MovUrAcc
 	{
 		public const string GUID = "madevil.kk.MovUrAcc";
 		public const string PluginName = "MovUrAcc";
-		public const string Version = "1.10.3.0";
+		public const string Version = "1.10.4.0";
 
 		internal static new ManualLogSource Logger;
 		internal static Harmony HooksInstance;

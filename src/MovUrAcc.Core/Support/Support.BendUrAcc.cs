@@ -16,7 +16,10 @@ namespace MovUrAcc
 			{
 				BepInEx.Bootstrap.Chainloader.PluginInfos.TryGetValue("madevil.kk.BendUrAcc", out PluginInfo PluginInfo);
 				PluginInstance = PluginInfo?.Instance;
-				if (PluginInstance != null) Installed = true;
+				if (PluginInstance != null)
+					Installed = true;
+				else
+					return;
 
 				if (PluginInfo.Metadata.Version.CompareTo(new Version("1.0.5.0")) < 0)
 				{
