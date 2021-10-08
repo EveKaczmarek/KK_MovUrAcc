@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 
+using UnityEngine;
+
 using BepInEx;
 using BepInEx.Logging;
 using HarmonyLib;
@@ -22,12 +24,12 @@ namespace MovUrAcc
 #if MoreAcc
 	[BepInDependency("com.joan6694.illusionplugins.moreaccessories", "1.1.0")]
 #endif
-	[BepInPlugin(GUID, PluginName, Version)]
+	[BepInPlugin(GUID, Name, Version)]
 	public partial class MovUrAcc : BaseUnityPlugin
 	{
 		public const string GUID = "madevil.kk.MovUrAcc";
-		public const string PluginName = "MovUrAcc";
-		public const string Version = "1.10.4.0";
+		public const string Name = "MovUrAcc";
+		public const string Version = "1.11.0.0";
 
 		internal static new ManualLogSource Logger;
 		internal static Harmony HooksInstance;
@@ -45,6 +47,13 @@ namespace MovUrAcc
 			IsDark = true;
 #endif
 			MoreAccessories.InitSupport();
+#if !DEBUG && MoreAcc
+			if (MoreAccessories.BuggyBootleg)
+			{
+				Logger.LogError($"Could not load {Name} {Version} because it is incompatible with MoreAccessories experimental build");
+				return;
+			}
+#endif
 			MaterialEditor.InitSupport();
 			HairAccessoryCustomizer.InitSupport();
 			AccStateSync.InitSupport();
@@ -60,21 +69,38 @@ namespace MovUrAcc
 
 				MakerCategory category = new MakerCategory("05_ParameterTop", "tglMovUrAcc", MakerConstants.Parameter.Attribute.Position + 1, "MovUrAcc");
 				ev.AddSubCategory(category);
-
-				CatBatchTransfer(ev, category);
-
+#if KKS
+				ev.AddControl(new MakerText("MoreAccessories experimental build detected", category, this) { TextColor = new Color(1, 0.7f, 0, 1) });
+				ev.AddControl(new MakerText("This is not meant for productive use", category, this));
 				ev.AddControl(new MakerSeparator(category, this));
-				CatBatchRemove(ev, category);
-#if MoreAcc
-				ev.AddControl(new MakerSeparator(category, this));
-				CatParentSort(ev, category);
 #endif
-				ev.AddControl(new MakerSeparator(category, this));
-				CatPacking(ev, category);
 #if MoreAcc
-				ev.AddControl(new MakerSeparator(category, this));
-				CatTrimMoreacc(ev, category);
+				if (MoreAccessories.BuggyBootleg)
+				{
+					ev.AddControl(new MakerText("MoreAccessories experimental build detected", category, this) { TextColor = new Color(1, 0.7f, 0, 1) });
+					ev.AddControl(new MakerText("This is not meant for productive use", category, this));
+					ev.AddControl(new MakerText("Please rollback to current stable build", category, this));
+					ev.AddControl(new MakerText("Which could be found at", category, this));
+					ev.AddControl(new MakerText("https://www.patreon.com/posts/kk-ec-1-1-0-39203275", category, this));
+				}
+				else
 #endif
+				{
+					CatBatchTransfer(ev, category);
+
+					ev.AddControl(new MakerSeparator(category, this));
+					CatBatchRemove(ev, category);
+#if MoreAcc
+					ev.AddControl(new MakerSeparator(category, this));
+					CatParentSort(ev, category);
+#endif
+					ev.AddControl(new MakerSeparator(category, this));
+					CatPacking(ev, category);
+#if MoreAcc
+					ev.AddControl(new MakerSeparator(category, this));
+					CatTrimMoreacc(ev, category);
+#endif
+				}
 				btnLock = false;
 			};
 
@@ -84,6 +110,7 @@ namespace MovUrAcc
 				HooksInstance = null;
 			};
 		}
+
 #if MoreAcc
 		internal void CatTrimMoreacc(RegisterSubCategoriesEvent ev, MakerCategory category)
 		{

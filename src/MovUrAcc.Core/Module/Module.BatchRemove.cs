@@ -33,6 +33,13 @@ namespace MovUrAcc
 
 		internal static void ActBatchRemove(int start, int end, int mode)
 		{
+#if !DEBUG && MoreAcc
+			if (MoreAccessories.BuggyBootlegCheck())
+			{
+				Logger.LogMessage($"The card is not supported because its accessory data has been altered by a buggy plugin");
+				return;
+			}
+#endif
 			if (btnLock)
 				return;
 			btnLock = true;

@@ -17,6 +17,7 @@ namespace MovUrAcc
 		internal static class MoreAccessories
 		{
 			internal static bool Installed = false;
+			internal static bool BuggyBootleg = false;
 #if MoreAcc
 			internal static MoreAccessoriesKOI.MoreAccessories PluginInstance;
 #else
@@ -31,9 +32,18 @@ namespace MovUrAcc
 #else
 				PluginInstance = PluginInfo?.Instance;
 #endif
-				if (PluginInstance != null) Installed = true;
+				if (PluginInstance != null)
+				{
+					Installed = true;
+					BuggyBootleg = PluginInfo.Metadata.Version.CompareTo(new Version("2.0")) > -1;
+				}
 			}
-
+#if MoreAcc
+			internal static bool BuggyBootlegCheck()
+			{
+				return CustomBase.Instance.chaCtrl.chaFile.coordinate.Any(x => x.accessory.parts.Length > 20);
+			}
+#endif
 			internal static ChaFileAccessory.PartsInfo GetPartsInfo(int slot)
 			{
 				ChaControl chaCtrl = CustomBase.Instance.chaCtrl;
@@ -88,6 +98,7 @@ namespace MovUrAcc
 				if (noShake)
 					Traverse.Create(GetCvsAccessory(dstSlot)).Field("tglNoShake").Property("isOn").SetValue(noShake);
 			}
+
 			internal static CvsAccessory GetCvsAccessory(int slot)
 			{
 				return Traverse.Create(PluginInstance).Method("GetCvsAccessory", new object[] { slot }).GetValue<CvsAccessory>();
@@ -107,6 +118,13 @@ namespace MovUrAcc
 #if MoreAcc
 			internal static void TrimUnusedSlots()
 			{
+#if !DEBUG && MoreAcc
+				if (BuggyBootlegCheck())
+				{
+					Logger.LogMessage($"The card is not supported because its accessory data has been altered by experimental build MoreAccessories");
+					return;
+				}
+#endif
 				if (btnLock)
 					return;
 				btnLock = true;
