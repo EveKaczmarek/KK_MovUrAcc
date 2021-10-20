@@ -5,7 +5,7 @@
     <DebugType>none</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>$(SolutionDir)bin\Debug</OutputPath>
-    <DefineConstants>DEBUG;TRACE;KK;MoreAcc</DefineConstants>
+    <DefineConstants>DEBUG;TRACE;KK</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>

@@ -29,7 +29,7 @@ namespace MovUrAcc
 	{
 		public const string GUID = "madevil.kk.MovUrAcc";
 		public const string Name = "MovUrAcc";
-		public const string Version = "1.11.0.0";
+		public const string Version = "1.11.1.0";
 
 		internal static new ManualLogSource Logger;
 		internal static Harmony HooksInstance;
@@ -69,7 +69,7 @@ namespace MovUrAcc
 
 				MakerCategory category = new MakerCategory("05_ParameterTop", "tglMovUrAcc", MakerConstants.Parameter.Attribute.Position + 1, "MovUrAcc");
 				ev.AddSubCategory(category);
-#if KKS
+#if !MoreAcc
 				ev.AddControl(new MakerText("MoreAccessories experimental build detected", category, this) { TextColor = new Color(1, 0.7f, 0, 1) });
 				ev.AddControl(new MakerText("This is not meant for productive use", category, this));
 				ev.AddControl(new MakerSeparator(category, this));
