@@ -9,14 +9,15 @@
     <Import_RootNamespace>MovUrAcc.Core</Import_RootNamespace>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)Module\Module.RemoveCharacterAccessory.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Plugin.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Extension.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)AssemblyInfo.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Module\Module.BatchRemove.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Module\Module.BatchTransfer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Module\Module.Packing.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Module\Module.ParentSort.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Support\Support.BendUrAcc.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Support\Support.CharacterAccessory.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Support\Support.MaterialRouter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Support\Support.MoreAccessories.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Support\Support.MaterialEditor.cs" />

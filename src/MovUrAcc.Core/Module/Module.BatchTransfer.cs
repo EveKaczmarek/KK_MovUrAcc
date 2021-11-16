@@ -1,8 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
 
-using HarmonyLib;
-
 using KKAPI.Maker;
 using KKAPI.Maker.UI;
 
@@ -10,169 +8,138 @@ namespace MovUrAcc
 {
 	public partial class MovUrAcc
 	{
-		internal void CatBatchTransfer(RegisterSubCategoriesEvent ev, MakerCategory category)
+		internal void CatBatchTransfer(RegisterSubCategoriesEvent _ev, MakerCategory _category)
 		{
-			ev.AddControl(new MakerText("Batch transfer accessory slots", category, this));
+			_ev.AddControl(new MakerText("Batch transfer accessory slots", _category, this));
 
-			MakerTextbox StartTextbox = ev.AddControl(new MakerTextbox(category, "Start", "", this));
-			MakerTextbox EndTextbox = ev.AddControl(new MakerTextbox(category, "End", "", this));
+			MakerTextbox StartTextbox = _ev.AddControl(new MakerTextbox(_category, "Start", "", this));
+			MakerTextbox EndTextbox = _ev.AddControl(new MakerTextbox(_category, "End", "", this));
 
-			MakerTextbox NewStartTextbox = ev.AddControl(new MakerTextbox(category, "Shift first slot to", "", this));
+			MakerTextbox NewStartTextbox = _ev.AddControl(new MakerTextbox(_category, "Shift first slot to", "", this));
 
-			MakerRadioButtons tglMode = ev.AddControl(new MakerRadioButtons(category, this, "Mode", "All", "Hair", "Item"));
+			MakerRadioButtons _tglMode = _ev.AddControl(new MakerRadioButtons(_category, this, "Mode", "All", "Hair", "Item"));
 
-			MakerButton btnApply = ev.AddControl(new MakerButton("Go", category, this));
-			btnApply.OnClick.AddListener(delegate
+			MakerButton _btnApply = _ev.AddControl(new MakerButton("Go", _category, this));
+			_btnApply.OnClick.AddListener(delegate
 			{
-				if (!int.TryParse(StartTextbox.Value, out int start))
+				if (!int.TryParse(StartTextbox.Value, out int _start))
 				{
 					StartTextbox.Value = "";
-					start = 0;
+					_start = 0;
 				}
-				if (!int.TryParse(EndTextbox.Value, out int end))
+				if (!int.TryParse(EndTextbox.Value, out int _end))
 				{
 					EndTextbox.Value = "";
-					end = 0;
+					_end = 0;
 				}
-				if (!int.TryParse(NewStartTextbox.Value, out int newstart))
+				if (!int.TryParse(NewStartTextbox.Value, out int _newstart))
 				{
 					NewStartTextbox.Value = "";
-					newstart = 0;
+					_newstart = 0;
 				}
-				ActBatchTransfer(start - 1, end - 1, newstart - 1, tglMode.Value);
+				ActBatchTransfer(_start - 1, _end - 1, _newstart - 1, _tglMode.Value);
 			});
 		}
 
-		internal static void ActBatchTransfer(int start, int end, int newstart, int mode)
+		internal static void ActBatchTransfer(int _start, int _end, int _newstart, int _mode)
 		{
-#if !DEBUG && MoreAcc
-			if (MoreAccessories.BuggyBootlegCheck())
-			{
-				Logger.LogMessage($"The card is not supported because its accessory data has been altered by a buggy plugin");
-				return;
-			}
-#endif
 			if (btnLock)
 				return;
 			btnLock = true;
 
-			ChaControl chaCtrl = ChaCustom.CustomBase.Instance.chaCtrl;
+			List<ChaFileAccessory.PartsInfo> _nowAccessories = JetPack.Accessory.ListNowAccessories(_chaCtrl);
 
-#if MoreAcc
-			int nowAccCount = MoreAccessories.PluginInstance._charaMakerData.nowAccessories.Count;
-#else
-			int nowAccCount = chaCtrl.nowCoordinate.accessory.parts.Length;
-#endif
+			Dictionary<int, int> _parts = new Dictionary<int, int>();
 
-			Dictionary<int, int> parts = new Dictionary<int, int>();
-#if MoreAcc
-			for (int i = 0; i < (20 + nowAccCount); i++)
+			for (int i = 0; i < _nowAccessories.Count; i++)
 			{
-				ChaFileAccessory.PartsInfo part = MoreAccessories.GetPartsInfo(i);
-				if (part.type == 120)
+				ChaFileAccessory.PartsInfo _part = _nowAccessories.ElementAtOrDefault(i);
+				if (_part.type == 120)
 					continue;
-				parts[i] = part.type;
-			}
-#else
-			for (int i = 0; i < nowAccCount; i++)
-			{
-				ChaFileAccessory.PartsInfo part = chaCtrl.nowCoordinate.accessory.parts[i];
-				if (part.type == 120)
-					continue;
-				parts[i] = part.type;
-			}
-#endif
-			if (start < 0)
-			{
-				if (parts.Count > 0)
-					start = parts.First().Key;
+				_parts[i] = _part.type;
 			}
 
-			if (end < 0)
+			if (_start < 0)
 			{
-				if (parts.Count > 0)
-					end = parts.Last().Key;
+				if (_parts.Count > 0)
+					_start = _parts.First().Key;
 			}
 
-			if (newstart < 0)
-				newstart = 0;
-
-			if (mode == 0 && start == newstart)
+			if (_end < 0)
 			{
-				Logger.LogMessage($"Start and new start are the same, nothing to do");
+				if (_parts.Count > 0)
+					_end = _parts.Last().Key;
+			}
+
+			if (_newstart < 0)
+				_newstart = 0;
+
+			if (_mode == 0 && _start == _newstart)
+			{
+				_logger.LogMessage($"Start and new start are the same, nothing to do");
 				btnLock = false;
 				return;
 			}
 
-			if (start > end)
+			if (_start > _end)
 			{
-				Logger.LogMessage($"End value must be greater than start value");
+				_logger.LogMessage($"End value must be greater than start value");
 				btnLock = false;
 				return;
 			}
 
-			int amount = newstart - start;
-			Logger.LogDebug($"[mode: {mode}][start: {start + 1:00}][end: {end + 1:00}][newstart: {newstart + 1:00}][amount: {amount}]");
+			int _amount = _newstart - _start;
+			_logger.LogDebug($"[mode: {_mode}][start: {_start + 1:00}][end: {_end + 1:00}][newstart: {_newstart + 1:00}][amount: {_amount}]");
 
-			List<QueueItem> Queue = new List<QueueItem>();
-			int newSlot = newstart;
-			if (mode == 0)
+			List<QueueItem> _queue = new List<QueueItem>();
+			int _newSlot = _newstart;
+			if (_mode == 0)
 			{
-				for (int i = start; i <= end; i++)
+				for (int i = _start; i <= _end; i++)
 				{
-					newSlot = i + amount;
-					Queue.Add(new QueueItem(i, newSlot));
+					_newSlot = i + _amount;
+					_queue.Add(new QueueItem(i, _newSlot));
 				}
 			}
 			else
 			{
-				for (int i = start; i <= end; i++)
+				for (int i = _start; i <= _end; i++)
 				{
-					ChaFileAccessory.PartsInfo part = MoreAccessories.GetPartsInfo(i);
-					if (part.type == 120)
+					ChaFileAccessory.PartsInfo _part = _nowAccessories.ElementAtOrDefault(i);
+					if (_part.type == 120)
 						continue;
-					if (mode == 1 && !IsHairAccessory(chaCtrl, i))
+					if (_mode == 1 && !IsHairAccessory(_chaCtrl, i))
 						continue;
-					else if (mode == 2 && IsHairAccessory(chaCtrl, i))
+					else if (_mode == 2 && IsHairAccessory(_chaCtrl, i))
 						continue;
 
-					Queue.Add(new QueueItem(i, newSlot));
-					newSlot++;
+					_queue.Add(new QueueItem(i, _newSlot));
+					_newSlot++;
 				}
-				newSlot -= 1;
+				_newSlot -= 1;
 			}
 
-			if (Queue.Count == 0)
+			if (_queue.Count == 0)
 			{
-				Logger.LogMessage($"Nothing to do");
+				_logger.LogMessage($"Nothing to do");
 				btnLock = false;
 				return;
 			}
 
-			if (amount > 0)
+			if (_amount > 0)
 			{
-				Queue = Queue.OrderByDescending(x => x.srcSlot).ToList();
-#if MoreAcc
-				if (newSlot > 19)
+				_queue = _queue.OrderByDescending(x => x.srcSlot).ToList();
+				if (_queue.Any(x => x.dstSlot >= _nowAccessories.Count))
 				{
-					Logger.LogDebug($"Expand MoreAccessories slots from {nowAccCount} to {end + amount - 19}");
-
-					for (int i = 0; i < (newSlot - 19 - nowAccCount); i++)
+					for (int i = 0; i < (_newSlot - (_nowAccessories.Count - 1)); i++)
 						MoreAccessories.AddSlot();
 				}
-#else
-				if (Queue.Any(x => x.dstSlot >= nowAccCount))
-				{
-					for (int i = 0; i < (newSlot - (nowAccCount - 1)); i++)
-						MoreAccessories.AddSlot();
-				}
-#endif
 			}
 
-			ProcessQueue(Queue);
+			ProcessQueue(_queue);
 
 			btnLock = false;
-			chaCtrl.ChangeCoordinateTypeAndReload(false);
+			_chaCtrl.ChangeCoordinateTypeAndReload(false);
 		}
 	}
 }

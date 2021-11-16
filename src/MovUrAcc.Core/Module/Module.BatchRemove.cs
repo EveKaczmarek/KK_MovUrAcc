@@ -1,3 +1,8 @@
+using System.Collections.Generic;
+using System.Linq;
+
+using ChaCustom;
+
 using KKAPI.Maker;
 using KKAPI.Maker.UI;
 
@@ -5,106 +10,76 @@ namespace MovUrAcc
 {
 	public partial class MovUrAcc
 	{
-		internal void CatBatchRemove(RegisterSubCategoriesEvent ev, MakerCategory category)
+		internal void CatBatchRemove(RegisterSubCategoriesEvent _ev, MakerCategory _category)
 		{
-			ev.AddControl(new MakerText("Batch remove accessory slots", category, this));
+			_ev.AddControl(new MakerText("Batch remove accessory slots", _category, this));
 
-			MakerTextbox StartTextbox = ev.AddControl(new MakerTextbox(category, "Start", "", this));
-			MakerTextbox EndTextbox = ev.AddControl(new MakerTextbox(category, "End", "", this));
+			MakerTextbox StartTextbox = _ev.AddControl(new MakerTextbox(_category, "Start", "", this));
+			MakerTextbox EndTextbox = _ev.AddControl(new MakerTextbox(_category, "End", "", this));
 
-			MakerRadioButtons tglMode = ev.AddControl(new MakerRadioButtons(category, this, "Mode", "All", "Hair", "Item"));
+			MakerRadioButtons _tglMode = _ev.AddControl(new MakerRadioButtons(_category, this, "Mode", "All", "Hair", "Item"));
 
-			MakerButton btnRmApply = ev.AddControl(new MakerButton("Go", category, this));
-			btnRmApply.OnClick.AddListener(delegate
+			MakerButton _btnApply = _ev.AddControl(new MakerButton("Go", _category, this));
+			_btnApply.OnClick.AddListener(delegate
 			{
-				if (!int.TryParse(StartTextbox.Value, out int start))
+				if (!int.TryParse(StartTextbox.Value, out int _start))
 				{
 					StartTextbox.Value = "";
-					start = 0;
+					_start = 0;
 				}
-				if (!int.TryParse(EndTextbox.Value, out int end))
+				if (!int.TryParse(EndTextbox.Value, out int _end))
 				{
 					EndTextbox.Value = "";
-					end = 0;
+					_end = 0;
 				}
-				ActBatchRemove(start - 1, end - 1, tglMode.Value);
+				ActBatchRemove(_start - 1, _end - 1, _tglMode.Value);
 			});
 		}
 
-		internal static void ActBatchRemove(int start, int end, int mode)
+		internal static void ActBatchRemove(int _start, int _end, int _mode)
 		{
-#if !DEBUG && MoreAcc
-			if (MoreAccessories.BuggyBootlegCheck())
-			{
-				Logger.LogMessage($"The card is not supported because its accessory data has been altered by a buggy plugin");
-				return;
-			}
-#endif
 			if (btnLock)
 				return;
 			btnLock = true;
 
-			ChaControl chaCtrl = ChaCustom.CustomBase.Instance.chaCtrl;
+			List<ChaFileAccessory.PartsInfo> _nowAccessories = JetPack.Accessory.ListNowAccessories(_chaCtrl);
 
-#if MoreAcc
-			int nowAccCount = MoreAccessories.PluginInstance._charaMakerData.nowAccessories.Count;
-#else
-			int nowAccCount = chaCtrl.nowCoordinate.accessory.parts.Length;
-#endif
-			if (start < 0)
-				start = 0;
-#if MoreAcc
-			if (end < 0)
-				end = nowAccCount + 19;
-			else if (end > nowAccCount + 19)
-				end = nowAccCount + 19;
-#else
-			if (end < 0)
-				end = nowAccCount - 1;
-			else if (end >= nowAccCount)
-				end = nowAccCount - 1;
-#endif
-			if (start > end)
+			if (_start < 0)
+				_start = 0;
+
+			if (_end < 0 || _end >= _nowAccessories.Count)
+				_end = _nowAccessories.Count - 1;
+
+			if (_start > _end)
 			{
-				Logger.LogMessage($"End value must be greater than start value");
+				_logger.LogMessage($"End value must be greater than start value");
 				btnLock = false;
 				return;
 			}
 
-			object MEpluginCtrl = MaterialEditor.GetController(chaCtrl);
-			object HACpluginCtrl = HairAccessoryCustomizer.GetController(chaCtrl);
-			object ASSpluginCtrl = AccStateSync.GetController(chaCtrl);
-			object MRpluginCtrl = MaterialRouter.GetController(chaCtrl);
-			object DBEpluginCtrl = DynamicBoneEditor.GetController(chaCtrl);
-			object APKpluginCtrl = AAAPK.GetController(chaCtrl);
-			object BUApluginCtrl = BendUrAcc.GetController(chaCtrl);
-			int Coordinate = chaCtrl.fileStatus.coordinateType;
-
-			for (int i = start; i <= end; i++)
+			for (int i = _start; i <= _end; i++)
 			{
-				ChaFileAccessory.PartsInfo part = MoreAccessories.GetPartsInfo(i);
-				if (part.type == 120)
+				ChaFileAccessory.PartsInfo _part = _nowAccessories.ElementAtOrDefault(i);
+				if (_part.type == 120)
 					continue;
-				if (mode == 1 && !IsHairAccessory(chaCtrl, i))
+				if (_mode == 1 && !IsHairAccessory(_chaCtrl, i))
 					continue;
-				else if (mode == 2 && IsHairAccessory(chaCtrl, i))
+				else if (_mode == 2 && IsHairAccessory(_chaCtrl, i))
 					continue;
 
 				HairAccessoryCustomizer.RemoveSetting(HACpluginCtrl, i);
 				MaterialEditor.RemoveSetting(MEpluginCtrl, i);
-				AccStateSync.RemoveSetting(ASSpluginCtrl, Coordinate, i);
-				MaterialRouter.RemoveSetting(MRpluginCtrl, Coordinate, i);
-				DynamicBoneEditor.RemoveSetting(DBEpluginCtrl, Coordinate, i);
-				AAAPK.RemoveSetting(APKpluginCtrl, Coordinate, i);
-				BendUrAcc.RemoveSetting(BUApluginCtrl, Coordinate, i);
-				MoreAccessories.ResetPartsInfo(chaCtrl, Coordinate, i);
+				AccStateSync.RemoveSetting(ASSpluginCtrl, _currentCoordinateIndex, i);
+				MaterialRouter.RemoveSetting(MRpluginCtrl, _currentCoordinateIndex, i);
+				DynamicBoneEditor.RemoveSetting(DBEpluginCtrl, _currentCoordinateIndex, i);
+				AAAPK.RemoveSetting(APKpluginCtrl, _currentCoordinateIndex, i);
+				BendUrAcc.RemoveSetting(BUApluginCtrl, _currentCoordinateIndex, i);
+				MoreAccessories.ResetPartsInfo(_chaCtrl, _currentCoordinateIndex, i);
 			}
 
-			AccStateSync.SyncVirtualGroupInfo(ASSpluginCtrl, Coordinate);
-
 			btnLock = false;
-			ChaCustom.CustomBase.Instance.chaCtrl.ChangeCoordinateTypeAndReload(false);
-			ChaCustom.CustomBase.Instance.updateCustomUI = true;
+			_chaCtrl.ChangeCoordinateTypeAndReload(false);
+			CustomBase.Instance.updateCustomUI = true;
 		}
 	}
 }

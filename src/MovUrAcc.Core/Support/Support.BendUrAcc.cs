@@ -17,37 +17,36 @@ namespace MovUrAcc
 				BepInEx.Bootstrap.Chainloader.PluginInfos.TryGetValue("madevil.kk.BendUrAcc", out PluginInfo PluginInfo);
 				PluginInstance = PluginInfo?.Instance;
 				if (PluginInstance != null)
-					Installed = true;
-				else
-					return;
-
-				if (PluginInfo.Metadata.Version.CompareTo(new Version("1.0.5.0")) < 0)
 				{
-					Logger.LogError($"BendUrAcc 1.0.5.0 is required to work properly, version {PluginInfo.Metadata.Version} detected");
-					Installed = false;
+					if (PluginInfo.Metadata.Version.CompareTo(new Version("1.0.5.0")) < 0)
+					{
+						_logger.LogError($"BendUrAcc 1.0.5.0 is required to work properly, version {PluginInfo.Metadata.Version} detected");
+						return;
+					}
+					Installed = true;
 				}
 			}
 
-			internal static object GetController(ChaControl chaCtrl)
+			internal static object GetController(ChaControl _chaCtrl)
 			{
 				if (!Installed) return null;
 
-				return Traverse.Create(PluginInstance).Method("GetController", new object[] { chaCtrl }).GetValue();
+				return Traverse.Create(PluginInstance).Method("GetController", new object[] { _chaCtrl }).GetValue();
 			}
 
-			internal static void ModifySetting(object pluginCtrl, int index, int srcSlot, int dstSlot)
+			internal static void ModifySetting(object _pluginCtrl, int _coordinateIndex, int _srcSlot, int _dstSlot)
 			{
 				if (!Installed) return;
 
-				Traverse.Create(pluginCtrl).Method("CloneModifier", new object[] { srcSlot, dstSlot, index, index }).GetValue();
-				Traverse.Create(pluginCtrl).Method("RemoveSlotModifier", new object[] { index, srcSlot }).GetValue();
+				Traverse.Create(_pluginCtrl).Method("CloneModifier", new object[] { _srcSlot, _dstSlot, _coordinateIndex, _coordinateIndex }).GetValue();
+				Traverse.Create(_pluginCtrl).Method("RemoveSlotModifier", new object[] { _coordinateIndex, _srcSlot }).GetValue();
 			}
 
-			internal static void RemoveSetting(object pluginCtrl, int index, int slot)
+			internal static void RemoveSetting(object _pluginCtrl, int _coordinateIndex, int _slotIndex)
 			{
 				if (!Installed) return;
 
-				Traverse.Create(pluginCtrl).Method("RemoveSlotModifier", new object[] { index, slot }).GetValue();
+				Traverse.Create(_pluginCtrl).Method("RemoveSlotModifier", new object[] { _coordinateIndex, _slotIndex }).GetValue();
 			}
 		}
 	}

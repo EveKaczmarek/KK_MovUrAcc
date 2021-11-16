@@ -49,9 +49,9 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="MoreAccessories">
-      <HintPath>..\..\lib\Dummy\KK\MoreAccessories.dll</HintPath>
-      <Private>false</Private>
+    <Reference Include="JetPack">
+      <HintPath>..\..\lib\Release\KK_JetPack.dll</HintPath>
+      <Private>False</Private>
     </Reference>
   </ItemGroup>
   <ItemGroup>

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 
 using UnityEngine;
+using ChaCustom;
 
 using BepInEx;
 using BepInEx.Logging;
@@ -21,39 +22,60 @@ namespace MovUrAcc
 	[BepInProcess("KoikatsuSunshine")]
 #endif
 	[BepInDependency(KoikatuAPI.GUID, KoikatuAPI.VersionConst)]
-#if MoreAcc
-	[BepInDependency("com.joan6694.illusionplugins.moreaccessories", "1.1.0")]
-#endif
+	[BepInDependency("madevil.JetPack", JetPack.Core.Version)]
 	[BepInPlugin(GUID, Name, Version)]
 	public partial class MovUrAcc : BaseUnityPlugin
 	{
 		public const string GUID = "madevil.kk.MovUrAcc";
+#if DEBUG
+		public const string Name = "MovUrAcc (Debug Build)";
+#else
 		public const string Name = "MovUrAcc";
-		public const string Version = "1.11.1.0";
+#endif
+		public const string Version = "2.0.0.0";
 
-		internal static new ManualLogSource Logger;
-		internal static Harmony HooksInstance;
-		internal static MovUrAcc Instance;
+		internal static ManualLogSource _logger;
+		internal static Harmony _hooksInstance;
+
 		internal static bool IsDark;
 		internal static bool btnLock = false;
 
+		internal static object MEpluginCtrl;
+		internal static object HACpluginCtrl;
+		internal static object ASSpluginCtrl;
+		internal static object MRpluginCtrl;
+		internal static object DBEpluginCtrl;
+		internal static object APKpluginCtrl;
+		internal static object BUApluginCtrl;
+		internal static object CApluginCtrl;
+
+		internal static ChaControl _chaCtrl;
+		internal static int _currentCoordinateIndex => _chaCtrl?.fileStatus?.coordinateType ?? -1;
+
 		private void Start()
 		{
-			Instance = this;
-			Logger = base.Logger;
-#if KK
-			IsDark = typeof(ChaControl).GetProperties(AccessTools.all).Any(x => x.Name == "exType");
-#elif KKS
-			IsDark = true;
-#endif
-			MoreAccessories.InitSupport();
-#if !DEBUG && MoreAcc
-			if (MoreAccessories.BuggyBootleg)
+			_logger = base.Logger;
+
+#if KK && !DEBUG
+			if (JetPack.MoreAccessories.BuggyBootleg)
 			{
-				Logger.LogError($"Could not load {Name} {Version} because it is incompatible with MoreAccessories experimental build");
+				_logger.LogError($"Could not load {Name} {Version} because it is incompatible with MoreAccessories experimental build");
 				return;
 			}
 #endif
+			if (!JetPack.MoreAccessories.Installed)
+			{
+#if KK
+				if (JetPack.MoreAccessories.BuggyBootleg)
+					_logger.LogError($"Backward compatibility in BuggyBootleg MoreAccessories is disabled");
+				return;
+#endif
+			}
+
+			IsDark = JetPack.Game.HasDarkness;
+
+			MoreAccessories.InitSupport();
+
 			MaterialEditor.InitSupport();
 			HairAccessoryCustomizer.InitSupport();
 			AccStateSync.InitSupport();
@@ -61,76 +83,106 @@ namespace MovUrAcc
 			DynamicBoneEditor.InitSupport();
 			AAAPK.InitSupport();
 			BendUrAcc.InitSupport();
+			CharacterAccessory.InitSupport();
 
-			MakerAPI.RegisterCustomSubCategories += (sender, ev) =>
+			MakerAPI.RegisterCustomSubCategories += (_sender, _ev) =>
 			{
-				HooksInstance = Harmony.CreateAndPatchAll(typeof(Hooks));
+				_hooksInstance = Harmony.CreateAndPatchAll(typeof(Hooks));
 				MaterialEditor.HookInit();
 
-				MakerCategory category = new MakerCategory("05_ParameterTop", "tglMovUrAcc", MakerConstants.Parameter.Attribute.Position + 1, "MovUrAcc");
-				ev.AddSubCategory(category);
-#if !MoreAcc
-				ev.AddControl(new MakerText("MoreAccessories experimental build detected", category, this) { TextColor = new Color(1, 0.7f, 0, 1) });
-				ev.AddControl(new MakerText("This is not meant for productive use", category, this));
-				ev.AddControl(new MakerSeparator(category, this));
-#endif
-#if MoreAcc
+				MakerCategory _category = new MakerCategory("05_ParameterTop", "tglMovUrAcc", MakerConstants.Parameter.Attribute.Position + 1, "MovUrAcc");
+				_ev.AddSubCategory(_category);
+
 				if (MoreAccessories.BuggyBootleg)
 				{
-					ev.AddControl(new MakerText("MoreAccessories experimental build detected", category, this) { TextColor = new Color(1, 0.7f, 0, 1) });
-					ev.AddControl(new MakerText("This is not meant for productive use", category, this));
-					ev.AddControl(new MakerText("Please rollback to current stable build", category, this));
-					ev.AddControl(new MakerText("Which could be found at", category, this));
-					ev.AddControl(new MakerText("https://www.patreon.com/posts/kk-ec-1-1-0-39203275", category, this));
+					_ev.AddControl(new MakerText("MoreAccessories experimental build detected", _category, this) { TextColor = new Color(1, 0.7f, 0, 1) });
+					_ev.AddControl(new MakerText("This is not meant for productive use", _category, this));
+					_ev.AddControl(new MakerSeparator(_category, this));
 				}
-				else
-#endif
-				{
-					CatBatchTransfer(ev, category);
 
-					ev.AddControl(new MakerSeparator(category, this));
-					CatBatchRemove(ev, category);
-#if MoreAcc
-					ev.AddControl(new MakerSeparator(category, this));
-					CatParentSort(ev, category);
-#endif
-					ev.AddControl(new MakerSeparator(category, this));
-					CatPacking(ev, category);
-#if MoreAcc
-					ev.AddControl(new MakerSeparator(category, this));
-					CatTrimMoreacc(ev, category);
-#endif
+				{
+					CatBatchTransfer(_ev, _category);
+
+					_ev.AddControl(new MakerSeparator(_category, this));
+					CatBatchRemove(_ev, _category);
+
+					if (!MoreAccessories.BuggyBootleg)
+					{
+						_ev.AddControl(new MakerSeparator(_category, this));
+						CatParentSort(_ev, _category);
+					}
+
+					_ev.AddControl(new MakerSeparator(_category, this));
+					CatPacking(_ev, _category);
+					
+					if (!MoreAccessories.BuggyBootleg)
+					{
+						_ev.AddControl(new MakerSeparator(_category, this));
+						CatTrimMoreacc(_ev, _category);
+					}
+					else
+					{
+						_ev.AddControl(new MakerSeparator(_category, this));
+						_ev.AddControl(new MakerText("Trim down unused slots is part of the experimental MoreAccessories feature", _category, this));
+					}
+
+					if (CharacterAccessory.Installed)
+					{
+						_ev.AddControl(new MakerSeparator(_category, this));
+						CatRemoveCA(_ev, _category);
+					}
 				}
 				btnLock = false;
 			};
 
-			MakerAPI.MakerExiting += (sender, ev) =>
+			MakerAPI.MakerFinishedLoading += (_sender, _ev) =>
 			{
-				HooksInstance.UnpatchAll(HooksInstance.Id);
-				HooksInstance = null;
+				_chaCtrl = CustomBase.Instance.chaCtrl;
+				MEpluginCtrl = MaterialEditor.GetController(_chaCtrl);
+				HACpluginCtrl = HairAccessoryCustomizer.GetController(_chaCtrl);
+				ASSpluginCtrl = AccStateSync.GetController(_chaCtrl);
+				MRpluginCtrl = MaterialRouter.GetController(_chaCtrl);
+				DBEpluginCtrl = DynamicBoneEditor.GetController(_chaCtrl);
+				APKpluginCtrl = AAAPK.GetController(_chaCtrl);
+				BUApluginCtrl = BendUrAcc.GetController(_chaCtrl);
+				CApluginCtrl = CharacterAccessory.GetController(_chaCtrl);
+			};
+
+			MakerAPI.MakerExiting += (_sender, _ev) =>
+			{
+				_chaCtrl = null;
+				MEpluginCtrl = null;
+				HACpluginCtrl = null;
+				ASSpluginCtrl = null;
+				MRpluginCtrl = null;
+				DBEpluginCtrl = null;
+				APKpluginCtrl = null;
+				BUApluginCtrl = null;
+				CApluginCtrl = null;
+
+				_hooksInstance.UnpatchAll(_hooksInstance.Id);
+				_hooksInstance = null;
 			};
 		}
 
-#if MoreAcc
-		internal void CatTrimMoreacc(RegisterSubCategoriesEvent ev, MakerCategory category)
+		internal void CatTrimMoreacc(RegisterSubCategoriesEvent _ev, MakerCategory _category)
 		{
-			ev.AddControl(new MakerText("Trim down unused MoreAccessories slots", category, this));
+			_ev.AddControl(new MakerText("Trim down unused MoreAccessories slots", _category, this));
 
-			MakerButton btnMoreAccApply = ev.AddControl(new MakerButton("Go", category, this));
-			btnMoreAccApply.OnClick.AddListener(delegate
+			_ev.AddControl(new MakerButton("Go", _category, this)).OnClick.AddListener(delegate
 			{
 				MoreAccessories.TrimUnusedSlots();
 			});
 		}
-#endif
+
 		internal class QueueItem
 		{
 			public int srcSlot { get; set; }
 			public int dstSlot { get; set; }
-			public QueueItem(int src, int dst)
+			public QueueItem(int _src, int _dst)
 			{
-				srcSlot = src;
-				dstSlot = dst;
+				srcSlot = _src;
+				dstSlot = _dst;
 			}
 		}
 
@@ -145,8 +197,8 @@ namespace MovUrAcc
 			{
 				if (btnLock)
 				{
-					IEnumerator original = __result;
-					__result = new[] { original, Postfix() }.GetEnumerator();
+					IEnumerator _original = __result;
+					__result = new[] { _original, Postfix() }.GetEnumerator();
 					return false;
 				}
 
@@ -159,53 +211,35 @@ namespace MovUrAcc
 			}
 		}
 
-		internal static void ProcessQueue(List<QueueItem> Queue)
+		internal static void ProcessQueue(List<QueueItem> _queue)
 		{
-			ChaControl chaCtrl = MakerAPI.GetCharacterControl();
-			object MEpluginCtrl = MaterialEditor.GetController(chaCtrl);
-			object HACpluginCtrl = HairAccessoryCustomizer.GetController(chaCtrl);
-			object ASSpluginCtrl = AccStateSync.GetController(chaCtrl);
-			object MRpluginCtrl = MaterialRouter.GetController(chaCtrl);
-			object DBEpluginCtrl = DynamicBoneEditor.GetController(chaCtrl);
-			object APKpluginCtrl = AAAPK.GetController(chaCtrl);
-			object BUApluginCtrl = BendUrAcc.GetController(chaCtrl);
-
 			HairAccessoryCustomizer.HairAccessoryInfos = new Dictionary<int, HairAccessoryCustomizer.HairAccessoryInfo>();
-			int Coordinate = chaCtrl.fileStatus.coordinateType;
 
-			foreach (QueueItem item in Queue)
+			int _coordinateIndex = _currentCoordinateIndex;
+
+			foreach (QueueItem x in _queue)
 			{
-				Logger.LogDebug($"{item.srcSlot} -> {item.dstSlot}");
-				HairAccessoryCustomizer.StoreSetting(chaCtrl, HACpluginCtrl, item.srcSlot); // need to do this before move PartsInfo
-				MoreAccessories.ModifyPartsInfo(chaCtrl, Coordinate, item.srcSlot, item.dstSlot);
-				MaterialEditor.ModifySetting(MEpluginCtrl, Coordinate, item.srcSlot, item.dstSlot);
-				AccStateSync.ModifySetting(ASSpluginCtrl, Coordinate, item.srcSlot, item.dstSlot);
-				MaterialRouter.ModifySetting(MRpluginCtrl, Coordinate, item.srcSlot, item.dstSlot);
-				DynamicBoneEditor.ModifySetting(DBEpluginCtrl, Coordinate, item.srcSlot, item.dstSlot);
-				AAAPK.ModifySetting(APKpluginCtrl, Coordinate, item.srcSlot, item.dstSlot);
-				BendUrAcc.ModifySetting(BUApluginCtrl, Coordinate, item.srcSlot, item.dstSlot);
+				_logger.LogDebug($"{x.srcSlot} -> {x.dstSlot}");
+				HairAccessoryCustomizer.StoreSetting(_chaCtrl, HACpluginCtrl, x.srcSlot); // need to do this before move PartsInfo
+				MoreAccessories.ModifyPartsInfo(_chaCtrl, _coordinateIndex, x.srcSlot, x.dstSlot);
+				MaterialEditor.ModifySetting(MEpluginCtrl, _coordinateIndex, x.srcSlot, x.dstSlot);
+				AccStateSync.ModifySetting(ASSpluginCtrl, _coordinateIndex, x.srcSlot, x.dstSlot);
+				MaterialRouter.ModifySetting(MRpluginCtrl, _coordinateIndex, x.srcSlot, x.dstSlot);
+				DynamicBoneEditor.ModifySetting(DBEpluginCtrl, _coordinateIndex, x.srcSlot, x.dstSlot);
+				AAAPK.ModifySetting(APKpluginCtrl, _coordinateIndex, x.srcSlot, x.dstSlot);
+				BendUrAcc.ModifySetting(BUApluginCtrl, _coordinateIndex, x.srcSlot, x.dstSlot);
 			}
 
-			ChaCustom.CustomBase.Instance.chaCtrl.ChangeCoordinateTypeAndReload(false);
-			ChaCustom.CustomBase.Instance.updateCustomUI = true;
+			_chaCtrl.ChangeCoordinateTypeAndReload(false);
+			CustomBase.Instance.updateCustomUI = true;
 
-			foreach (QueueItem item in Queue)
-				HairAccessoryCustomizer.ModifySetting(HACpluginCtrl, item.srcSlot, item.dstSlot); // need to do this after updateCustomUI
+			foreach (QueueItem x in _queue)
+				HairAccessoryCustomizer.ModifySetting(HACpluginCtrl, x.srcSlot, x.dstSlot); // need to do this after updateCustomUI
 		}
 
-		internal static bool IsHairAccessory(ChaControl chaCtrl, int slot)
+		internal static bool IsHairAccessory(ChaControl _chaCtrl, int _slotIndex)
 		{
-			try
-			{
-				ChaAccessoryComponent accessory = chaCtrl.GetAccessoryObject(slot)?.GetComponent<ChaAccessoryComponent>();
-				if (accessory == null)
-					return false;
-				return accessory.gameObject?.GetComponent<ChaCustomHairComponent>() != null;
-			}
-			catch
-			{
-				return false;
-			}
+			return JetPack.Accessory.IsHairAccessory(_chaCtrl, _slotIndex);
 		}
 	}
 }

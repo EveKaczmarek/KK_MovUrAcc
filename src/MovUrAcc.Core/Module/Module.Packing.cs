@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 
 using KKAPI.Maker;
 using KKAPI.Maker.UI;
@@ -7,12 +8,12 @@ namespace MovUrAcc
 {
 	public partial class MovUrAcc
 	{
-		internal void CatPacking(RegisterSubCategoriesEvent ev, MakerCategory category)
+		internal void CatPacking(RegisterSubCategoriesEvent _ev, MakerCategory _category)
 		{
-			ev.AddControl(new MakerText("Pack acc list by removing unused slots", category, this));
+			_ev.AddControl(new MakerText("Pack acc list by removing unused slots", _category, this));
 
-			MakerButton btnPackSlots = ev.AddControl(new MakerButton("Go", category, this));
-			btnPackSlots.OnClick.AddListener(delegate
+			MakerButton _btnApply = _ev.AddControl(new MakerButton("Go", _category, this));
+			_btnApply.OnClick.AddListener(delegate
 			{
 				ActPacking();
 			});
@@ -20,50 +21,39 @@ namespace MovUrAcc
 
 		internal static void ActPacking()
 		{
-#if !DEBUG && MoreAcc
-			if (MoreAccessories.BuggyBootlegCheck())
-			{
-				Logger.LogMessage($"The card is not supported because its accessory data has been altered by a buggy plugin");
-				return;
-			}
-#endif
 			if (btnLock)
 				return;
 			btnLock = true;
 
-			ChaControl chaCtrl = ChaCustom.CustomBase.Instance.chaCtrl;
+			List<QueueItem> _queue = new List<QueueItem>();
 
-			List<QueueItem> Queue = new List<QueueItem>();
-#if MoreAcc
-			int nowAccCount = MoreAccessories.PluginInstance._charaMakerData.nowAccessories.Count + 20;
-#else
-			int nowAccCount = chaCtrl.nowCoordinate.accessory.parts.Length;
-#endif
-			int dstSlot = 0;
+			List<ChaFileAccessory.PartsInfo> _nowAccessories = JetPack.Accessory.ListNowAccessories(_chaCtrl);
 
-			for (int srcSlot = 0; srcSlot < nowAccCount; srcSlot++)
+			int _dstSlot = 0;
+
+			for (int _srcSlot = 0; _srcSlot < _nowAccessories.Count; _srcSlot++)
 			{
-				ChaFileAccessory.PartsInfo part = MoreAccessories.GetPartsInfo(srcSlot);
+				ChaFileAccessory.PartsInfo part = _nowAccessories.ElementAtOrDefault(_srcSlot);
 				if (part.type == 120)
 					continue;
 
-				if (srcSlot != dstSlot)
-					Queue.Add(new QueueItem(srcSlot, dstSlot));
+				if (_srcSlot != _dstSlot)
+					_queue.Add(new QueueItem(_srcSlot, _dstSlot));
 
-				dstSlot++;
+				_dstSlot++;
 			}
 
-			if (Queue.Count == 0)
+			if (_queue.Count == 0)
 			{
-				Logger.LogMessage("Nothing to do");
+				_logger.LogMessage("Nothing to do");
 				btnLock = false;
 				return;
 			}
 
-			ProcessQueue(Queue);
+			ProcessQueue(_queue);
 
 			btnLock = false;
-			chaCtrl.ChangeCoordinateTypeAndReload(false);
+			_chaCtrl.ChangeCoordinateTypeAndReload(false);
 		}
 	}
 }

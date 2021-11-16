@@ -53,6 +53,12 @@
     <Reference Include="System" />
   </ItemGroup>
   <ItemGroup>
+    <Reference Include="JetPack">
+      <HintPath>..\..\lib\Release\KKS_JetPack.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

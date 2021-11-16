@@ -24,26 +24,29 @@ namespace MovUrAcc
 			internal static void HookInit()
 			{
 				Type MaterialEditorCharaController = PluginInstance.GetType().Assembly.GetType("KK_Plugins.MaterialEditor.MaterialEditorCharaController");
-				HooksInstance.Patch(MaterialEditorCharaController.GetMethod("LoadData", AccessTools.all, null, new[] { typeof(bool), typeof(bool), typeof(bool) }, null), prefix: new HarmonyMethod(typeof(Hooks), nameof(Hooks.DuringLoading_Co_Prefix)));
+				_hooksInstance.Patch(MaterialEditorCharaController.GetMethod("LoadData", AccessTools.all, null, new[] { typeof(bool), typeof(bool), typeof(bool) }, null), prefix: new HarmonyMethod(typeof(Hooks), nameof(Hooks.DuringLoading_Co_Prefix)));
 			}
 
-			internal static object GetController(ChaControl chaCtrl)
+			internal static object GetController(ChaControl _chaCtrl)
 			{
 				if (!Installed) return null;
-				return Traverse.Create(PluginInstance).Method("GetCharaController", new object[] { chaCtrl }).GetValue();
+
+				return Traverse.Create(PluginInstance).Method("GetCharaController", new object[] { _chaCtrl }).GetValue();
 			}
 
-			internal static void ModifySetting(object pluginCtrl, int index, int srcSlot, int dstSlot)
+			internal static void ModifySetting(object _pluginCtrl, int index, int _srcSlot, int _dstSlot)
 			{
 				if (!Installed) return;
-				Traverse.Create(pluginCtrl).Method("AccessoryTransferredEvent", new object[] { null, new AccessoryTransferEventArgs(srcSlot, dstSlot) }).GetValue();
-				RemoveSetting(pluginCtrl, srcSlot);
+
+				Traverse.Create(_pluginCtrl).Method("AccessoryTransferredEvent", new object[] { null, new AccessoryTransferEventArgs(_srcSlot, _dstSlot) }).GetValue();
+				RemoveSetting(_pluginCtrl, _srcSlot);
 			}
 
-			internal static void RemoveSetting(object pluginCtrl, int slot)
+			internal static void RemoveSetting(object _pluginCtrl, int _slotIndex)
 			{
 				if (!Installed) return;
-				Traverse.Create(pluginCtrl).Method("AccessoryKindChangeEvent", new object[] { null, new AccessorySlotEventArgs(slot) }).GetValue();
+
+				Traverse.Create(_pluginCtrl).Method("AccessoryKindChangeEvent", new object[] { null, new AccessorySlotEventArgs(_slotIndex) }).GetValue();
 			}
 		}
 	}

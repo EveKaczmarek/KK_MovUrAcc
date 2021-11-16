@@ -19,23 +19,26 @@ namespace MovUrAcc
 				if (PluginInstance != null) Installed = true;
 			}
 
-			internal static object GetController(ChaControl chaCtrl)
+			internal static object GetController(ChaControl _chaCtrl)
 			{
 				if (!Installed) return null;
-				return Traverse.Create(PluginInstance).Method("GetController", new object[] { chaCtrl }).GetValue();
+
+				return Traverse.Create(PluginInstance).Method("GetController", new object[] { _chaCtrl }).GetValue();
 			}
 
-			internal static void ModifySetting(object pluginCtrl, int index, int srcSlot, int dstSlot)
+			internal static void ModifySetting(object _pluginCtrl, int _coordinateIndex, int _srcSlot, int _dstSlot)
 			{
 				if (!Installed) return;
-				Traverse.Create(pluginCtrl).Method("TransferAccSlotInfo", new object[] { index, new AccessoryTransferEventArgs(srcSlot, dstSlot) }).GetValue();
-				RemoveSetting(pluginCtrl, index, srcSlot);
+
+				Traverse.Create(_pluginCtrl).Method("TransferAccSlotInfo", new object[] { _coordinateIndex, new AccessoryTransferEventArgs(_srcSlot, _dstSlot) }).GetValue();
+				RemoveSetting(_pluginCtrl, _coordinateIndex, _srcSlot);
 			}
 
-			internal static void RemoveSetting(object pluginCtrl, int index, int slot)
+			internal static void RemoveSetting(object _pluginCtrl, int _coordinateIndex, int _slotIndex)
 			{
 				if (!Installed) return;
-				Traverse.Create(pluginCtrl).Method("RemoveAccSlotInfo", new object[] { index, slot }).GetValue();
+
+				Traverse.Create(_pluginCtrl).Method("RemoveAccSlotInfo", new object[] { _coordinateIndex, _slotIndex }).GetValue();
 			}
 		}
 	}

@@ -20,55 +20,60 @@ namespace MovUrAcc
 				if (PluginInstance != null) Installed = true;
 			}
 
-			internal static object GetController(ChaControl chaCtrl)
+			internal static object GetController(ChaControl _chaCtrl)
 			{
 				if (!Installed) return null;
-				return Traverse.Create(PluginInstance).Method("GetController", new object[] { chaCtrl }).GetValue();;
+
+				return Traverse.Create(PluginInstance).Method("GetController", new object[] { _chaCtrl }).GetValue();;
 			}
 
-			internal static void StoreSetting(ChaControl chaCtrl, object pluginCtrl, int slot)
+			internal static void StoreSetting(ChaControl _chaCtrl, object _pluginCtrl, int _slotIndex)
 			{
-				if (!Installed)
-					return;
+				if (!Installed) return;
 
-				if (IsHairAccessory(chaCtrl, slot))
+				if (IsHairAccessory(_chaCtrl, _slotIndex))
 				{
-					HairAccessoryInfos[slot] = new HairAccessoryInfo()
+					Traverse _traverse = Traverse.Create(_pluginCtrl);
+
+					HairAccessoryInfos[_slotIndex] = new HairAccessoryInfo()
 					{
-						HairGloss = Traverse.Create(pluginCtrl).Method("GetHairGloss", new object[] { slot }).GetValue<bool>(),
-						ColorMatch = Traverse.Create(pluginCtrl).Method("GetColorMatch", new object[] { slot }).GetValue<bool>(),
-						OutlineColor = Traverse.Create(pluginCtrl).Method("GetOutlineColor", new object[] { slot }).GetValue<Color>(),
-						AccessoryColor = Traverse.Create(pluginCtrl).Method("GetAccessoryColor", new object[] { slot }).GetValue<Color>(),
-						HairLength = Traverse.Create(pluginCtrl).Method("GetHairLength", new object[] { slot }).GetValue<float>()
+						HairGloss = _traverse.Method("GetHairGloss", new object[] { _slotIndex }).GetValue<bool>(),
+						ColorMatch = _traverse.Method("GetColorMatch", new object[] { _slotIndex }).GetValue<bool>(),
+						OutlineColor = _traverse.Method("GetOutlineColor", new object[] { _slotIndex }).GetValue<Color>(),
+						AccessoryColor = _traverse.Method("GetAccessoryColor", new object[] { _slotIndex }).GetValue<Color>(),
+						HairLength = _traverse.Method("GetHairLength", new object[] { _slotIndex }).GetValue<float>()
 					};
 				}
 
-				RemoveSetting(pluginCtrl, slot);
+				RemoveSetting(_pluginCtrl, _slotIndex);
 			}
 
-			internal static void ModifySetting(object pluginCtrl, int srcSlot, int dstSlot)
+			internal static void ModifySetting(object _pluginCtrl, int _srcSlot, int _dstSlot)
 			{
 				if (!Installed) return;
 
-				RemoveSetting(pluginCtrl, dstSlot);
+				RemoveSetting(_pluginCtrl, _dstSlot);
 
-				if (!HairAccessoryInfos.ContainsKey(srcSlot))
+				if (!HairAccessoryInfos.ContainsKey(_srcSlot))
 					return;
 
-				if (!Traverse.Create(pluginCtrl).Method("InitHairAccessoryInfo", new object[] { dstSlot }).GetValue<bool>())
+				Traverse _traverse = Traverse.Create(_pluginCtrl);
+
+				if (!_traverse.Method("InitHairAccessoryInfo", new object[] { _dstSlot }).GetValue<bool>())
 					return;
 
-				Traverse.Create(pluginCtrl).Method("SetHairGloss", new object[] { HairAccessoryInfos[srcSlot].HairGloss, dstSlot }).GetValue();
-				Traverse.Create(pluginCtrl).Method("SetColorMatch", new object[] { HairAccessoryInfos[srcSlot].ColorMatch, dstSlot }).GetValue();
-				Traverse.Create(pluginCtrl).Method("SetOutlineColor", new object[] { HairAccessoryInfos[srcSlot].OutlineColor, dstSlot }).GetValue();
-				Traverse.Create(pluginCtrl).Method("SetAccessoryColor", new object[] { HairAccessoryInfos[srcSlot].AccessoryColor, dstSlot }).GetValue();
-				Traverse.Create(pluginCtrl).Method("SetHairLength", new object[] { HairAccessoryInfos[srcSlot].HairLength, dstSlot }).GetValue();
+				_traverse.Method("SetHairGloss", new object[] { HairAccessoryInfos[_srcSlot].HairGloss, _dstSlot }).GetValue();
+				_traverse.Method("SetColorMatch", new object[] { HairAccessoryInfos[_srcSlot].ColorMatch, _dstSlot }).GetValue();
+				_traverse.Method("SetOutlineColor", new object[] { HairAccessoryInfos[_srcSlot].OutlineColor, _dstSlot }).GetValue();
+				_traverse.Method("SetAccessoryColor", new object[] { HairAccessoryInfos[_srcSlot].AccessoryColor, _dstSlot }).GetValue();
+				_traverse.Method("SetHairLength", new object[] { HairAccessoryInfos[_srcSlot].HairLength, _dstSlot }).GetValue();
 			}
 
-			internal static void RemoveSetting(object pluginCtrl, int slot)
+			internal static void RemoveSetting(object _pluginCtrl, int _slotIndex)
 			{
 				if (!Installed) return;
-				Traverse.Create(pluginCtrl).Method("RemoveHairAccessoryInfo", new object[] { slot }).GetValue();
+
+				Traverse.Create(_pluginCtrl).Method("RemoveHairAccessoryInfo", new object[] { _slotIndex }).GetValue();
 			}
 
 			internal class HairAccessoryInfo

@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 
-using HarmonyLib;
-
 using KKAPI.Maker;
 using KKAPI.Maker.UI;
 
@@ -11,100 +9,116 @@ namespace MovUrAcc
 {
 	public partial class MovUrAcc
 	{
-		internal void CatParentSort(RegisterSubCategoriesEvent ev, MakerCategory category)
+		internal void CatParentSort(RegisterSubCategoriesEvent _ev, MakerCategory _category)
 		{
-			ev.AddControl(new MakerText("Sort by accessory parents", category, this));
+			_ev.AddControl(new MakerText("Sort by accessory parents", _category, this));
 
-			MakerButton btnApply = ev.AddControl(new MakerButton("Go", category, this));
-			btnApply.OnClick.AddListener(delegate
+			MakerRadioButtons _tglMode = _ev.AddControl(new MakerRadioButtons(_category, this, "Mode", "All", "Parent", "Hair"));
+
+			MakerToggle _tglIDSort = _ev.AddControl(new MakerToggle(_category, "Sort by item ID", false, this));
+
+			MakerButton _btnApply = _ev.AddControl(new MakerButton("Go", _category, this));
+			_btnApply.OnClick.AddListener(delegate
 			{
-				ActParentSort();
+				ActParentSort(_tglMode.Value, _tglIDSort.Value);
 			});
 		}
 
-		internal static void ActParentSort()
+		internal static void ActParentSort(int _mode, bool _idSort)
 		{
-#if !DEBUG && MoreAcc
-			if (MoreAccessories.BuggyBootlegCheck())
-			{
-				Logger.LogMessage($"The card is not supported because its accessory data has been altered by a buggy plugin");
-				return;
-			}
-#endif
 			if (btnLock)
 				return;
 			btnLock = true;
-#if MoreAcc
-			int nowAccCount = MoreAccessories.PluginInstance._charaMakerData.nowAccessories.Count;
-#else
-			int nowAccCount = 0;
-#endif
-			int dstSlot = -1;
 
-			Dictionary<int, string> parts = new Dictionary<int, string>();
+			List<ChaFileAccessory.PartsInfo> _nowAccessories = JetPack.Accessory.ListNowAccessories(_chaCtrl);
 
-			for (int i = 0; i < (20 + nowAccCount); i++)
+			if (_nowAccessories.Count == 0)
 			{
-				ChaFileAccessory.PartsInfo part = MoreAccessories.GetPartsInfo(i);
+				_logger.LogMessage("Nothing to do");
+				btnLock = false;
+				return;
+			}
+
+			int _dstSlot = -1;
+
+			Dictionary<int, ChaFileAccessory.PartsInfo> _parts = new Dictionary<int, ChaFileAccessory.PartsInfo>();
+			for (int i = 0; i < _nowAccessories.Count; i++)
+			{
+				ChaFileAccessory.PartsInfo part = _nowAccessories.ElementAtOrDefault(i);
 				if (part.type == 120)
 					continue;
 
-				parts[i] = part.parentKey;
-				dstSlot = i;
+				_parts[i] = part;
+				_dstSlot = i;
 			}
+			List<int> _oldOrder = new List<int>(_parts.Select(x => x.Key));
 
-			if (parts.Count == 0)
+			if (_idSort)
+				_parts = _parts.OrderBy(x => x.Value.type).ThenBy(x => x.Value.id).ToDictionary(x => x.Key, x => x.Value);
+
+			if (_mode == 1 || _mode == 0)
 			{
-				Logger.LogMessage("Nothing to do");
-				btnLock = false;
-				return;
-			}
+				HashSet<string> _parentsUsed = new HashSet<string>(_parts.OrderBy(x => x.Value.parentKey).Select(x => x.Value.parentKey));
+				HashSet<string> _parentsDefined = new HashSet<string>(Enum.GetNames(typeof(ChaAccessoryDefine.AccessoryParentKey)).Where(x => x.StartsWith("a_n_")));
+				_parentsDefined.IntersectWith(_parentsUsed);
+				List<string> _parentSorted = _parentsDefined.ToList();
+				_parentSorted.AddRange(_parentsUsed.Where(x => !x.StartsWith("a_n_")));
 
-			dstSlot++;
-
-			HashSet<string> parentsUsed = new HashSet<string>(parts.OrderBy(x => x.Value).Select(x => x.Value));
-			HashSet<string> parentsDefined = new HashSet<string>(Enum.GetNames(typeof(ChaAccessoryDefine.AccessoryParentKey)).Where(x => x.StartsWith("a_n_")));
-			parentsDefined.IntersectWith(parentsUsed);
-			List<string> parentSorted = parentsDefined.ToList();
-			parentSorted.AddRange(parentsUsed.Where(x => !x.StartsWith("a_n_")));
-
-			List<QueueItem> Queue = new List<QueueItem>();
-			bool changed = false;
-			int max = -1;
-
-			foreach (string parent in parentSorted)
-			{
-				foreach (KeyValuePair<int, string> part in parts)
+				Dictionary<int, ChaFileAccessory.PartsInfo> _pool = new Dictionary<int, ChaFileAccessory.PartsInfo>();
+				foreach (string _parent in _parentSorted)
 				{
-					if (part.Value != parent)
-						continue;
-
-					if (max > part.Key)
-						changed = true;
-					max = part.Key;
-
-					Queue.Add(new QueueItem(part.Key, dstSlot));
-					dstSlot++;
+					foreach (KeyValuePair<int, ChaFileAccessory.PartsInfo> x in _parts)
+					{
+						if (x.Value.parentKey != _parent)
+							continue;
+						_pool.Add(x.Key, x.Value);
+					}
 				}
+				_parts = _pool;
+				//_pool.Clear();
 			}
 
-			if (!changed)
+			if (_mode == 2 || _mode == 0)
 			{
-				Logger.LogMessage("Same order, nothing to do");
+				Dictionary<int, ChaFileAccessory.PartsInfo> _partsHair = new Dictionary<int, ChaFileAccessory.PartsInfo>();
+				Dictionary<int, ChaFileAccessory.PartsInfo> _partsItem = new Dictionary<int, ChaFileAccessory.PartsInfo>();
+				foreach (KeyValuePair<int, ChaFileAccessory.PartsInfo> x in _parts)
+				{
+					if (IsHairAccessory(_chaCtrl, x.Key))
+						_partsHair.Add(x.Key, x.Value);
+					else
+						_partsItem.Add(x.Key, x.Value);
+				}
+				_parts = _partsHair.Concat(_partsItem).ToDictionary(x => x.Key, x => x.Value);
+			}
+
+			bool _changed = false;
+			int j = 0;
+			List <QueueItem> _queue = new List<QueueItem>();
+			foreach (KeyValuePair<int, ChaFileAccessory.PartsInfo> x in _parts)
+			{
+				if (x.Key != _oldOrder[j])
+					_changed = true;
+				j++;
+
+				_dstSlot++;
+				_queue.Add(new QueueItem(x.Key, _dstSlot));
+			}
+
+			if (!_changed)
+			{
+				_logger.LogMessage("Same order, nothing to do");
 				btnLock = false;
 				return;
 			}
 
-			if (dstSlot - 19 > nowAccCount)
-			{
-				for (int i = 1; i < (dstSlot - 19 - nowAccCount); i++)
-					Traverse.Create(MoreAccessories.PluginInstance).Method("AddSlot").GetValue();
-			}
+			for (int i = 0; i < (_dstSlot - (_nowAccessories.Count - 1)); i++)
+				MoreAccessories.AddSlot();
 
-			ProcessQueue(Queue);
+			ProcessQueue(_queue);
 
 			btnLock = false;
-			ChaCustom.CustomBase.Instance.chaCtrl.ChangeCoordinateTypeAndReload(false);
+			_chaCtrl.ChangeCoordinateTypeAndReload(false);
 		}
 	}
 }
