@@ -17,6 +17,13 @@ namespace MovUrAcc
 				if (PluginInstance != null) Installed = true;
 			}
 
+			internal static void HookInit()
+			{
+				if (!Installed) return;
+
+				_hooksInstance.Patch(PluginInstance.GetType().Assembly.GetType("AAAPK.AAAPK+Hooks").GetMethod("ChaControl_ChangeShakeAccessory_Prefix", AccessTools.all), prefix: new HarmonyMethod(typeof(Hooks), nameof(Hooks.DuringLoading_Prefix)));
+			}
+
 			internal static object GetController(ChaControl _chaCtrl)
 			{
 				if (!Installed) return null;

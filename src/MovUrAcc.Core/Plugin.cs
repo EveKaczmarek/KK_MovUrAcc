@@ -32,7 +32,7 @@ namespace MovUrAcc
 #else
 		public const string Name = "MovUrAcc";
 #endif
-		public const string Version = "2.0.0.0";
+		public const string Version = "2.1.1.0";
 
 		internal static ManualLogSource _logger;
 		internal static Harmony _hooksInstance;
@@ -89,6 +89,8 @@ namespace MovUrAcc
 			{
 				_hooksInstance = Harmony.CreateAndPatchAll(typeof(Hooks));
 				MaterialEditor.HookInit();
+				AccStateSync.HookInit();
+				AAAPK.HookInit();
 
 				MakerCategory _category = new MakerCategory("05_ParameterTop", "tglMovUrAcc", MakerConstants.Parameter.Attribute.Position + 1, "MovUrAcc");
 				_ev.AddSubCategory(_category);
@@ -96,7 +98,7 @@ namespace MovUrAcc
 				if (MoreAccessories.BuggyBootleg)
 				{
 					_ev.AddControl(new MakerText("MoreAccessories experimental build detected", _category, this) { TextColor = new Color(1, 0.7f, 0, 1) });
-					_ev.AddControl(new MakerText("This is not meant for productive use", _category, this));
+					_ev.AddControl(new MakerText("This is not meant for production use", _category, this));
 					_ev.AddControl(new MakerSeparator(_category, this));
 				}
 
